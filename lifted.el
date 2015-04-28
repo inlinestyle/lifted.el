@@ -46,16 +46,31 @@
   (lexical-let ((body body)
                 (state (if (hash-table-p state) state (make-hash-table))))
     (lambda (&rest commands)
-      (while commands
-        (let ((command (pop commands))
-              (callback (pop commands)))
-          (if callback
-              (let ((subscriber (pcase command
-                                  (:subscribe-next (lifted:subscriber :next callback))
-                                  (:subscribe-completed (lifted:subscriber :completed callback)))))
-                (lifted--subscribe body state subscriber))
-            (message "Missing callback for %s" command))))
-      (lifted:signal body state))))
+      (if (not commands)
+          (lifted:signal body state)
+        (lexical-let ((command (pop commands))
+                      (callback (pop commands)))
+          (unless callback
+            (error "Missing callback for %s" command))
+          (let ((new-signal (pcase command
+                              (:map
+                               (lexical-let* ((copy-signal (lifted:signal body)))
+                                 (lifted:signal
+                                  (lambda (subscriber)
+                                    (lexical-let ((subscriber subscriber))
+                                      (funcall copy-signal :subscribe-next
+                                               (lambda (value)
+                                                 (funcall subscriber :send-next
+                                                          (funcall callback value)))))))))
+                              (:subscribe-next
+                               (progn
+                                 (lifted--subscribe body state (lifted:subscriber :next callback))
+                                 (lifted:signal body state)))
+                              (:subscribe-completed
+                               (progn
+                                 (lifted--subscribe body state (lifted:subscriber :completed callback))
+                                 (lifted:signal body state))))))
+            (apply new-signal commands)))))))
 
 (defun lifted:subscriber (&rest commands)
   "Creates a 'subscriber' closure"

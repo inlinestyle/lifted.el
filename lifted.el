@@ -21,9 +21,13 @@
 
 ;;; Samples (will almost certainly change):
 
+;; ** Making a key signal
+
+;; (defvar key-signal (lifted:signal-for-key (kbd "C-c s")))
+
 ;; ** Making a signal
 
-;; (defvar user-commands-signal
+;; (defvar post-command-signal
 ;;   (lifted:signal
 ;;    (lambda (subscriber)
 ;;      (lexical-let ((subscriber subscriber))
@@ -33,16 +37,44 @@
 
 ;; ** Subscribing
 
-;; (funcall user-commands-signal
+;; (funcall post-command-signal
 ;;          :subscribe-next (lambda (command) (message "got command: %s" command)))
 
 ;; ** Chaining subscriptions
 
-;; (funcall (funcall user-commands-signal
+;; (funcall (funcall post-commandssignal
 ;;                   :subscribe-next (lambda (command) (message "got command: %s" command)))
 ;;          :subscribe-next (lambda (command) (message "also got command: %s" command)))
 
+;; ** Functional operators
+
+;; (defvar timestamps-for-key (funcall key-signal :map (lambda (val) (float-time))))
+;;  --- equivalent to ---
+;; (defvar timestamps-for-key (lifted:map (lambda (val) (float-time)) key-signal))
+
+;; ** Chaining functional operators
+
+;; (funcall key-signal
+;;          :map (lambda (val) (float-time))
+;;          :subscribe-next (lambda (val) (message "subscriber 1 reporting timestamp: %s" val))
+;;          :subscribe-next (lambda (val) (message "subscriber 2 reporting timestamp: %s" val))
+;;          :map (lambda (val) (round val))
+;;          :filter (lambda (val) (evenp val))
+;;          :subscribe-next (lambda (val) (message "subscriber 3 reporting even timestamp: %s" val)))
+
 ;;; Code:
+
+(defun lifted:signal-for-key (key &optional key-map)
+  "Returns a signal that emits `t' each time is `key' is pressed.
+Binds to `key-map' if supplied, defaults to the global map."
+  (lexical-let ((subscribers '()))
+    (define-key (or key-map (current-global-map)) key
+      (lambda ()
+        (interactive)
+        (dolist (subscriber subscribers)
+          (funcall subscriber :send-next t))))
+    (lifted:signal (lambda (subscriber)
+                     (add-to-list 'subscribers subscriber)))))
 
 (defun lifted:map (callback base-signal)
   "Returns a signal producing the output of the `base-signal', with `callback' applied."

@@ -12,6 +12,8 @@
 ;; Obviously there's a lot left to do, including but not limited to:
 ;;  - real scheduling (possibly using deferred.el)
 ;;  - lots and lots of functional operators
+;;  - signal merging
+;;  - multicasting
 ;;  - signal disposal
 ;;  - a real concept of "sequences"
 ;;  - error handling
@@ -62,6 +64,16 @@
                                                (lambda (value)
                                                  (funcall subscriber :send-next
                                                           (funcall callback value)))))))))
+                              (:filter
+                               (lexical-let* ((copy-signal (lifted:signal body)))
+                                 (lifted:signal
+                                  (lambda (subscriber)
+                                    (lexical-let ((subscriber subscriber))
+                                      (funcall copy-signal :subscribe-next
+                                               (lambda (value)
+                                                 (when (funcall callback value)
+                                                   (funcall subscriber :send-next
+                                                            value)))))))))
                               (:subscribe-next
                                (progn
                                  (lifted--subscribe body state (lifted:subscriber :next callback))

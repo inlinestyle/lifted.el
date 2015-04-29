@@ -11,6 +11,7 @@
 ;; This is a rough draft of an FRP library for Emacs. I'm working from a number of inspirations, primarily ReactiveCocoa and Elm.
 ;; Obviously there's a lot left to do, including but not limited to:
 ;;  - real scheduling (possibly using deferred.el)
+;;  - nice UI helpers (keyboard binding, command binding, etc)
 ;;  - lots and lots of functional operators
 ;;  - signal merging
 ;;  - multicasting
@@ -44,6 +45,7 @@
 ;;; Code:
 
 (defun lifted:map (callback base-signal)
+  "Returns a signal producing the output of the `base-signal', with `callback' applied."
   (lexical-let* ((callback callback)
                  (base-signal base-signal))
     (lifted:signal
@@ -55,6 +57,7 @@
                              (funcall callback value)))))))))
 
 (defun lifted:filter (callback base-signal)
+  "Returns a signal producing the output of the `base-signal', if `callback' returns true when applied."
   (lexical-let* ((callback callback)
                  (base-signal base-signal))
     (lifted:signal
@@ -79,9 +82,9 @@
             (error "Missing callback for %s" command))
           (let ((new-signal (pcase command
                               (:map
-                               (lifted:map callback (lifted:signal body)))
+                               (lifted:map callback (lifted:signal body subscribers)))
                               (:filter
-                               (lifted:filter callback (lifted:signal body)))
+                               (lifted:filter callback (lifted:signal body subscribers)))
                               (:subscribe-next
                                (let ((subscriber (lifted:subscriber :next callback)))
                                  (funcall body subscriber)

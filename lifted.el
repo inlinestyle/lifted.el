@@ -43,6 +43,29 @@
 
 ;;; Code:
 
+(defun lifted:map (callback base-signal)
+  (lexical-let* ((callback callback)
+                 (base-signal base-signal))
+    (lifted:signal
+     (lambda (subscriber)
+       (lexical-let ((subscriber subscriber))
+         (funcall base-signal :subscribe-next
+                  (lambda (value)
+                    (funcall subscriber :send-next
+                             (funcall callback value)))))))))
+
+(defun lifted:filter (callback base-signal)
+  (lexical-let* ((callback callback)
+                 (base-signal base-signal))
+    (lifted:signal
+     (lambda (subscriber)
+       (lexical-let ((subscriber subscriber))
+         (funcall base-signal :subscribe-next
+                  (lambda (value)
+                    (when (funcall callback value)
+                      (funcall subscriber :send-next
+                               value)))))))))
+
 (defun lifted:signal (body &optional subscribers)
   "Creates a 'signal' closure"
   (lexical-let ((body body)
@@ -50,30 +73,15 @@
     (lambda (&rest commands)
       (if (not commands)
           (lifted:signal body subscribers)
-        (lexical-let ((command (pop commands))
-                      (callback (pop commands)))
+        (let ((command (pop commands))
+              (callback (pop commands)))
           (unless callback
             (error "Missing callback for %s" command))
           (let ((new-signal (pcase command
                               (:map
-                               (lexical-let* ((copy-signal (lifted:signal body)))
-                                 (lifted:signal
-                                  (lambda (subscriber)
-                                    (lexical-let ((subscriber subscriber))
-                                      (funcall copy-signal :subscribe-next
-                                               (lambda (value)
-                                                 (funcall subscriber :send-next
-                                                          (funcall callback value)))))))))
+                               (lifted:map callback (lifted:signal body)))
                               (:filter
-                               (lexical-let* ((copy-signal (lifted:signal body)))
-                                 (lifted:signal
-                                  (lambda (subscriber)
-                                    (lexical-let ((subscriber subscriber))
-                                      (funcall copy-signal :subscribe-next
-                                               (lambda (value)
-                                                 (when (funcall callback value)
-                                                   (funcall subscriber :send-next
-                                                            value)))))))))
+                               (lifted:filter callback (lifted:signal body)))
                               (:subscribe-next
                                (let ((subscriber (lifted:subscriber :next callback)))
                                  (funcall body subscriber)

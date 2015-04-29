@@ -43,13 +43,13 @@
 
 ;;; Code:
 
-(defun lifted:signal (body &optional state)
+(defun lifted:signal (body &optional subscribers)
   "Creates a 'signal' closure"
   (lexical-let ((body body)
-                (state (if (hash-table-p state) state (make-hash-table))))
+                (subscribers subscribers))
     (lambda (&rest commands)
       (if (not commands)
-          (lifted:signal body state)
+          (lifted:signal body subscribers)
         (lexical-let ((command (pop commands))
                       (callback (pop commands)))
           (unless callback
@@ -75,24 +75,24 @@
                                                    (funcall subscriber :send-next
                                                             value)))))))))
                               (:subscribe-next
-                               (progn
-                                 (lifted--subscribe body state (lifted:subscriber :next callback))
-                                 (lifted:signal body state)))
+                               (let ((subscriber (lifted:subscriber :next callback)))
+                                 (funcall body subscriber)
+                                 (lifted:signal body (cons subscriber subscribers))))
                               (:subscribe-completed
-                               (progn
-                                 (lifted--subscribe body state (lifted:subscriber :completed callback))
-                                 (lifted:signal body state))))))
+                               (let ((subscriber (lifted:subscriber :completed callback)))
+                                 (funcall body subscriber)
+                                 (lifted:signal body (cons subscriber subscribers)))))))
             (apply new-signal commands)))))))
 
 (defun lifted:subscriber (&rest commands)
   "Creates a 'subscriber' closure"
   (lexical-let ((callbacks (make-hash-table)))
-    (while commands 
+    (while commands
       (let ((command (pop commands))
             (callback (pop commands)))
         (if callback
             (puthash command callback callbacks)
-          (message "Missing callback for %s" command))))
+          (error "Missing callback for %s" command))))
     (lambda (&rest commands)
       (while commands
         (let ((command (pop commands))
@@ -100,16 +100,6 @@
           (pcase command
             (:send-next (funcall (gethash :next callbacks) value))
             (:send-completed (funcall (gethash :completed callbacks))))))))) ;; where to dispatch these?
-
-(defun lifted--cons-in (key value table)
-  "Helper for manipulating lists in hash-tables."
-  (let ((existing (gethash key table)))
-    (puthash key (cons value existing) table)))
-
-(defun lifted--subscribe (body state subscriber)
-  "Wires up subscribers to the signal's executable and state."
-  (funcall body subscriber)
-  (lifted--cons-in :subscribers subscriber state))
 
 (provide 'lifted)
 

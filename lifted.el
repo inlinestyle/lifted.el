@@ -64,17 +64,7 @@
 
 ;;; Code:
 
-(defun lifted:signal-for-key (key &optional key-map)
-  "Returns a signal that emits `t' each time is `key' is pressed.
-Binds to `key-map' if supplied, defaults to the global map."
-  (lexical-let ((subscribers '()))
-    (define-key (or key-map (current-global-map)) key
-      (lambda ()
-        (interactive)
-        (dolist (subscriber subscribers)
-          (funcall subscriber :send-next t))))
-    (lifted:signal (lambda (subscriber)
-                     (add-to-list 'subscribers subscriber)))))
+;; Operators
 
 (defun lifted:map (callback base-signal)
   "Returns a signal producing the output of the `base-signal', with `callback' applied."
@@ -100,6 +90,8 @@ Binds to `key-map' if supplied, defaults to the global map."
                     (when (funcall callback value)
                       (funcall subscriber :send-next
                                value)))))))))
+
+;; "Objects"
 
 (defun lifted:signal (body &optional subscribers)
   "Creates a 'signal' closure"
@@ -143,6 +135,20 @@ Binds to `key-map' if supplied, defaults to the global map."
           (pcase command
             (:send-next (funcall (gethash :next callbacks) value))
             (:send-completed (funcall (gethash :completed callbacks))))))))) ;; where to dispatch these?
+
+;; UI Utilities
+
+(defun lifted:signal-for-key (key &optional key-map)
+  "Returns a signal that emits `t' each time is `key' is pressed.
+Binds to `key-map' if supplied, defaults to the global map."
+  (lexical-let ((subscribers '()))
+    (define-key (or key-map (current-global-map)) key
+      (lambda ()
+        (interactive)
+        (dolist (subscriber subscribers)
+          (funcall subscriber :send-next t))))
+    (lifted:signal (lambda (subscriber)
+                     (add-to-list 'subscribers subscriber)))))
 
 (provide 'lifted)
 

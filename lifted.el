@@ -52,6 +52,12 @@
 ;;  --- equivalent to ---
 ;; (defvar timestamps-for-key (lifted:map (lambda (val) (float-time)) key-signal))
 
+;; Operators implemented so far:
+;; - filter
+;; - flatten (TODO: implement chaining form (need to allow 0 argument functions first))
+;; - flatten-map
+;; - map
+
 ;; ** Chaining functional operators
 
 ;; (funcall key-signal

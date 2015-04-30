@@ -68,8 +68,8 @@
 
 (defun lifted:map (callback base-signal)
   "Returns a signal producing the output of the `base-signal', with `callback' applied."
-  (lexical-let* ((callback callback)
-                 (base-signal base-signal))
+  (lexical-let ((callback callback)
+                (base-signal base-signal))
     (lifted:signal
      (lambda (subscriber)
        (lexical-let ((subscriber subscriber))
@@ -78,10 +78,22 @@
                     (funcall subscriber :send-next
                              (funcall callback value)))))))))
 
+(defun lifted:flatten (base-signal)
+  "Returns a signal merging the output of a signal-producing `base-signal'."
+  (lexical-let ((base-signal base-signal))
+    (lifted:signal
+     (lambda (subscriber)
+       (lexical-let ((subscriber subscriber))
+         (funcall base-signal :subscribe-next
+                  (lambda (value-signal)
+                    (funcall value-signal :subscribe-next
+                             (lambda (value)
+                               (funcall subscriber :send-next value))))))))))
+
 (defun lifted:filter (callback base-signal)
   "Returns a signal producing the output of the `base-signal', if `callback' returns true when applied."
-  (lexical-let* ((callback callback)
-                 (base-signal base-signal))
+  (lexical-let ((callback callback)
+                (base-signal base-signal))
     (lifted:signal
      (lambda (subscriber)
        (lexical-let ((subscriber subscriber))
@@ -90,6 +102,11 @@
                     (when (funcall callback value)
                       (funcall subscriber :send-next
                                value)))))))))
+
+(defun lifted:flatten-map (callback base-signal)
+  "Returns a signal merging the output of all signals produced when `callback' is mapped over `base-signal'"
+  (lifted:flatten (lifted:map callback base-signal)))
+
 
 ;; "Objects"
 
@@ -109,6 +126,8 @@
                                (lifted:map callback (lifted:signal body subscribers)))
                               (:filter
                                (lifted:filter callback (lifted:signal body subscribers)))
+                              (:flatten-map
+                               (lifted:flatten-map callback (lifted:signal body subscribers)))
                               (:subscribe-next
                                (let ((subscriber (lifted:subscriber :next callback)))
                                  (funcall body subscriber)

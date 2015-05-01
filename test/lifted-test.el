@@ -64,3 +64,21 @@
     (should (equal sentinel '()))
     (lifted:trigger-test-hooks 6)
     (should (equal sentinel '(6 18)))))
+
+(ert-deftest lifted-test-map-with-multiple-subscribers ()
+  (lifted:clear-test-hooks)
+  (lexical-let* ((sentinel '())
+                 (test-signal (lifted:make-test-signal))
+                 (test-map-signal (lifted:map (lambda (value)
+                                                (setq sentinel (cons "in-map" sentinel))
+                                                (format "%s:mapped" value)) test-signal)))
+    (funcall test-map-signal :subscribe-next
+             (lambda (value) (add-to-list 'sentinel (format "%s:subscribed0" value))))
+    (funcall test-map-signal :subscribe-next
+             (lambda (value) (add-to-list 'sentinel (format "%s:subscribed1" value))))
+    (should (equal sentinel '()))
+    (lifted:trigger-test-hooks "testing")
+    (should (equal sentinel '("testing:mapped:subscribed0"
+                              "in-map"
+                              "testing:mapped:subscribed1"
+                              "in-map")))))

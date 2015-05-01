@@ -88,3 +88,19 @@
                                "in-map"
                                "testing:mapped:subscribed1"
                                "in-map"))))
+
+(ert-deftest lifted-test-filter ()
+  (lifted:clear-test-fixtures)
+  (lexical-let* ((test-signal (lifted:make-test-signal))
+                 (test-map-signal (lifted:filter (lambda (value) (evenp value)) test-signal)))
+    (funcall test-signal :subscribe-next
+             (lambda (value) (lifted:log "%s" value)))
+    (funcall test-map-signal :subscribe-next
+             (lambda (value) (lifted:log "%s" value)))
+    (lifted:log-should-equal '())
+    (lifted:trigger-test-hooks 6)
+    (lifted:trigger-test-hooks 7)
+    (lifted:trigger-test-hooks 4)
+    (lifted:trigger-test-hooks 2)
+    (lifted:trigger-test-hooks 3)
+    (lifted:log-should-equal '("3" "2" "2" "4" "4" "7" "6" "6"))))

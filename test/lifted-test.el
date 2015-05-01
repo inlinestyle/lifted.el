@@ -5,13 +5,22 @@
 ;; Some helper fixtures & methods
 
 (defvar lifted:test-hooks '())
+(defvar lifted:test-log '())
+
+(defun lifted:clear-test-fixtures ()
+  (setq lifted:test-hooks '())
+  (setq lifted:test-log '()))
+
+(defun lifted:log-should-equal (log)
+  (should (equal lifted:test-log log)))
+
+(defun lifted:log (format-string &rest args)
+  (setq lifted:test-log (cons (apply 'format format-string args)
+                              lifted:test-log)))
 
 (defun lifted:trigger-test-hooks (value)
   (dolist (hook lifted:test-hooks)
     (funcall hook value)))
-
-(defun lifted:clear-test-hooks ()
-  (setq lifted:test-hooks '()))
 
 (defun lifted:make-test-signal ()
   (lifted:signal
@@ -23,62 +32,59 @@
 ;; Actual tests
 
 (ert-deftest lifted-test-signal-subscribe-next ()
-  (lifted:clear-test-hooks)
-  (lexical-let* ((sentinel '()))
-    (funcall (lifted:make-test-signal) :subscribe-next
-             (lambda (value) (add-to-list 'sentinel value)))
-    (should (equal sentinel '()))
-    (lifted:trigger-test-hooks "testing")
-    (should (equal sentinel '("testing")))))
+  (lifted:clear-test-fixtures)
+  (funcall (lifted:make-test-signal) :subscribe-next
+           (lambda (value) (lifted:log value)))
+  (lifted:log-should-equal '())
+  (lifted:trigger-test-hooks "testing")
+  (lifted:log-should-equal '("testing")))
 
 (ert-deftest lifted-test-signal-subscribe-next-with-multiple-subscribers ()
-  (lifted:clear-test-hooks)
-  (lexical-let* ((sentinel '())
-                 (test-signal (lifted:make-test-signal)))
+  (lifted:clear-test-fixtures)
+  (let ((test-signal (lifted:make-test-signal)))
     (funcall test-signal :subscribe-next
-             (lambda (value) (add-to-list 'sentinel (format "%s0" value))))
+             (lambda (value) (lifted:log "%s0" value)))
     (funcall test-signal :subscribe-next
-             (lambda (value) (add-to-list 'sentinel (format "%s1" value))))
-    (should (equal sentinel '()))
+             (lambda (value) (lifted:log "%s1" value)))
+    (lifted:log-should-equal '())
     (lifted:trigger-test-hooks "testing")
-    (should (equal sentinel '("testing0" "testing1")))))
+    (lifted:log-should-equal '("testing0" "testing1"))))
 
 (ert-deftest lifted-test-subscriber-send-next ()
-  (lexical-let* ((sentinel '())
-                 (subscriber (lifted:subscriber :next (lambda (value)
-                                                        (should (equal value "testing"))
-                                                        (add-to-list 'sentinel (format "%s0" value))))))
-    (should (equal sentinel '()))
+  (lifted:clear-test-fixtures)
+  (let ((subscriber (lifted:subscriber :next (lambda (value)
+                                               (should (equal value "testing"))
+                                               (lifted:log "%s0" value)))))
+    (lifted:log-should-equal '())
     (funcall subscriber :send-next "testing")
-    (should (equal sentinel '("testing0")))))
+    (lifted:log-should-equal '("testing0"))))
 
 (ert-deftest lifted-test-map ()
-  (lifted:clear-test-hooks)
-  (lexical-let* ((sentinel '())
-                 (test-signal (lifted:make-test-signal))
+  (lifted:clear-test-fixtures)
+  (lexical-let* ((test-signal (lifted:make-test-signal))
                  (test-map-signal (lifted:map (lambda (value) (* value 3)) test-signal)))
     (funcall test-signal :subscribe-next
-             (lambda (value) (add-to-list 'sentinel value)))
+             (lambda (value) (lifted:log "%s" value)))
     (funcall test-map-signal :subscribe-next
-             (lambda (value) (add-to-list 'sentinel value)))
-    (should (equal sentinel '()))
+             (lambda (value) (lifted:log "%s" value)))
+    (lifted:log-should-equal '())
     (lifted:trigger-test-hooks 6)
-    (should (equal sentinel '(6 18)))))
+    (lifted:log-should-equal '("6" "18"))))
 
 (ert-deftest lifted-test-map-with-multiple-subscribers ()
-  (lifted:clear-test-hooks)
-  (lexical-let* ((sentinel '())
-                 (test-signal (lifted:make-test-signal))
-                 (test-map-signal (lifted:map (lambda (value)
-                                                (setq sentinel (cons "in-map" sentinel))
-                                                (format "%s:mapped" value)) test-signal)))
+  (lifted:clear-test-fixtures)
+  (let* ((test-signal (lifted:make-test-signal))
+         (test-map-signal (lifted:map (lambda (value)
+                                        (lifted:log "in-map")
+                                        (format "%s:mapped" value))
+                                      test-signal)))
     (funcall test-map-signal :subscribe-next
-             (lambda (value) (add-to-list 'sentinel (format "%s:subscribed0" value))))
+             (lambda (value) (lifted:log "%s:subscribed0" value)))
     (funcall test-map-signal :subscribe-next
-             (lambda (value) (add-to-list 'sentinel (format "%s:subscribed1" value))))
-    (should (equal sentinel '()))
+             (lambda (value) (lifted:log "%s:subscribed1" value)))
+    (lifted:log-should-equal '())
     (lifted:trigger-test-hooks "testing")
-    (should (equal sentinel '("testing:mapped:subscribed0"
-                              "in-map"
-                              "testing:mapped:subscribed1"
-                              "in-map")))))
+    (lifted:log-should-equal '("testing:mapped:subscribed0"
+                               "in-map"
+                               "testing:mapped:subscribed1"
+                               "in-map"))))

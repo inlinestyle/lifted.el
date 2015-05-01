@@ -61,8 +61,8 @@
 
 (ert-deftest lifted-test-map ()
   (lifted:clear-test-fixtures)
-  (lexical-let* ((test-signal (lifted:make-test-signal))
-                 (test-map-signal (lifted:map (lambda (value) (* value 3)) test-signal)))
+  (let* ((test-signal (lifted:make-test-signal))
+         (test-map-signal (lifted:map (lambda (value) (* value 3)) test-signal)))
     (funcall test-signal :subscribe-next
              (lambda (value) (lifted:log "%s" value)))
     (funcall test-map-signal :subscribe-next
@@ -91,8 +91,8 @@
 
 (ert-deftest lifted-test-filter ()
   (lifted:clear-test-fixtures)
-  (lexical-let* ((test-signal (lifted:make-test-signal))
-                 (test-map-signal (lifted:filter (lambda (value) (evenp value)) test-signal)))
+  (let* ((test-signal (lifted:make-test-signal))
+         (test-map-signal (lifted:filter (lambda (value) (evenp value)) test-signal)))
     (funcall test-signal :subscribe-next
              (lambda (value) (lifted:log "%s" value)))
     (funcall test-map-signal :subscribe-next

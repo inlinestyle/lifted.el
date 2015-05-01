@@ -19,8 +19,7 @@
   (setq lifted:test-hooks '())
   (lexical-let* ((sentinel '()))
     (funcall (lifted:make-test-signal) :subscribe-next
-             (lambda (value)
-               (add-to-list 'sentinel value)))
+             (lambda (value) (add-to-list 'sentinel value)))
     (should (equal sentinel '()))
     (dolist (hook lifted:test-hooks)
       (funcall hook "testing"))
@@ -51,12 +50,12 @@
 (ert-deftest lifted-test-map ()
   (setq lifted:test-hooks '())
   (lexical-let* ((sentinel '())
-                (test-signal (lifted:make-test-signal))
-                (test-map-signal (lifted:map (lambda (value) (* value 3)) test-signal)))
-    (funcall test-signal :subscribe-next (lambda (value)
-                                           (add-to-list 'sentinel value)))
-    (funcall test-map-signal :subscribe-next (lambda (value)
-                                               (add-to-list 'sentinel value)))
+                 (test-signal (lifted:make-test-signal))
+                 (test-map-signal (lifted:map (lambda (value) (* value 3)) test-signal)))
+    (funcall test-signal :subscribe-next
+             (lambda (value) (add-to-list 'sentinel value)))
+    (funcall test-map-signal :subscribe-next
+             (lambda (value) (add-to-list 'sentinel value)))
     (should (equal sentinel '()))
     (dolist (hook lifted:test-hooks)
       (funcall hook 6))

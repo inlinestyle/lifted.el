@@ -106,6 +106,14 @@
     (lifted:log-should-equal '("3" "2" "2" "4" "4" "7" "6" "6"))))
 
 (ert-deftest lifted-test-flatten-map-with-multiple-subscribers ()
+  "Tests lifted:flatten-map.
+-> Our test mapping function takes a string, and returns a signal wired up
+to a dummy external source (`external-hooks').
+-> The signals returned by applying the mapping function emits the output of
+that source (really just calling callbacks) concatenated with the value
+input to the mapping function that spawned the signal.
+-> We set up two subscribers to the resulting 'signal of signals' to make
+sure that our mapping function gets called for each."
   (lifted:clear-test-fixtures)
   (lexical-let* ((external-hooks '()))
     (let* ((test-signal (lifted:make-test-signal))

@@ -6,6 +6,10 @@
 
 (defvar lifted:test-hooks '())
 
+(defun lifted:trigger-test-hooks (value)
+  (dolist (hook lifted:test-hooks)
+    (funcall hook value)))
+
 (defun lifted:make-test-signal ()
   (lifted:signal
    (lambda (subscriber)
@@ -21,8 +25,7 @@
     (funcall (lifted:make-test-signal) :subscribe-next
              (lambda (value) (add-to-list 'sentinel value)))
     (should (equal sentinel '()))
-    (dolist (hook lifted:test-hooks)
-      (funcall hook "testing"))
+    (lifted:trigger-test-hooks "testing")
     (should (equal sentinel '("testing")))))
 
 (ert-deftest lifted-test-signal-subscribe-next-with-multiple-subscribers ()
@@ -34,8 +37,7 @@
     (funcall test-signal :subscribe-next
              (lambda (value) (add-to-list 'sentinel (format "%s1" value))))
     (should (equal sentinel '()))
-    (dolist (hook lifted:test-hooks)
-      (funcall hook "testing"))
+    (lifted:trigger-test-hooks "testing")
     (should (equal sentinel '("testing0" "testing1")))))
 
 (ert-deftest lifted-test-subscriber-send-next ()
@@ -57,6 +59,5 @@
     (funcall test-map-signal :subscribe-next
              (lambda (value) (add-to-list 'sentinel value)))
     (should (equal sentinel '()))
-    (dolist (hook lifted:test-hooks)
-      (funcall hook 6))
+    (lifted:trigger-test-hooks 6)
     (should (equal sentinel '(6 18)))))

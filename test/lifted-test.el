@@ -1,0 +1,30 @@
+(require 'ert)
+(require 'lifted)
+
+(ert-deftest lifted-test-signal-subscribe-next ()
+  (lexical-let ((sentinel '())
+                (test-signal (lifted:signal
+                      (lambda (subscriber)
+                        (funcall subscriber :send-next "testing")))))
+    (funcall test-signal :subscribe-next (lambda (value)
+                                           (add-to-list 'sentinel value)))
+    (should (equal sentinel '("testing")))))
+
+(ert-deftest lifted-test-signal-subscribe-next-with-multiple-subscribers ()
+  (lexical-let ((sentinel '())
+                (test-signal (lifted:signal
+                      (lambda (subscriber)
+                        (funcall subscriber :send-next "testing")))))
+    (funcall test-signal :subscribe-next (lambda (value)
+                                           (add-to-list 'sentinel (format "%s0" value))))
+    (funcall test-signal :subscribe-next (lambda (value)
+                                           (add-to-list 'sentinel (format "%s1" value))))
+    (should (equal sentinel '("testing1" "testing0")))))
+
+(ert-deftest lifted-test-subscriber-send-next ()
+  (lexical-let* ((sentinel '())
+                 (subscriber (lifted:subscriber :next (lambda (value)
+                                                        (should (equal value "testing"))
+                                                        (add-to-list 'sentinel (format "%s0" value))))))
+    (funcall subscriber :send-next "testing")
+    (should (equal sentinel '("testing0")))))

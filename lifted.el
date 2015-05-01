@@ -70,6 +70,8 @@
 
 ;;; Code:
 
+(require 'cl)
+
 ;; Operators
 
 (defun lifted:map (callback base-signal)

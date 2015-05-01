@@ -10,6 +10,9 @@
   (dolist (hook lifted:test-hooks)
     (funcall hook value)))
 
+(defun lifted:clear-test-hooks ()
+  (setq lifted:test-hooks '()))
+
 (defun lifted:make-test-signal ()
   (lifted:signal
    (lambda (subscriber)
@@ -20,7 +23,7 @@
 ;; Actual tests
 
 (ert-deftest lifted-test-signal-subscribe-next ()
-  (setq lifted:test-hooks '())
+  (lifted:clear-test-hooks)
   (lexical-let* ((sentinel '()))
     (funcall (lifted:make-test-signal) :subscribe-next
              (lambda (value) (add-to-list 'sentinel value)))
@@ -29,7 +32,7 @@
     (should (equal sentinel '("testing")))))
 
 (ert-deftest lifted-test-signal-subscribe-next-with-multiple-subscribers ()
-  (setq lifted:test-hooks '())
+  (lifted:clear-test-hooks)
   (lexical-let* ((sentinel '())
                  (test-signal (lifted:make-test-signal)))
     (funcall test-signal :subscribe-next
@@ -50,7 +53,7 @@
     (should (equal sentinel '("testing0")))))
 
 (ert-deftest lifted-test-map ()
-  (setq lifted:test-hooks '())
+  (lifted:clear-test-hooks)
   (lexical-let* ((sentinel '())
                  (test-signal (lifted:make-test-signal))
                  (test-map-signal (lifted:map (lambda (value) (* value 3)) test-signal)))

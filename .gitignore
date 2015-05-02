@@ -2,8 +2,7 @@
 *#*
 *~*
 
-# Compiled
+# Testing
+/ert-tests/ert.el
+*-autoloads.el
 *.elc
-
-# Packaging
-.cask

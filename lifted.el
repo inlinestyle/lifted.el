@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t -*-
+
 ;;; lifted.el --- Functional reactive programming library for Emacs Lisp
 
 ;; Copyright (C) 2015 Ben Yelsey
@@ -70,17 +72,15 @@
 
 ;;; Code:
 
-(require 'cl)
-
 ;; Operators
 
 (defun lifted:map (callback base-signal)
   "Returns a signal producing the output of the `base-signal', with `callback' applied."
-  (lexical-let ((callback callback)
-                (base-signal base-signal))
+  (let ((callback callback)
+        (base-signal base-signal))
     (lifted:signal
      (lambda (subscriber)
-       (lexical-let ((subscriber subscriber))
+       (let ((subscriber subscriber))
          (funcall base-signal :subscribe-next
                   (lambda (value)
                     (funcall subscriber :send-next
@@ -88,10 +88,10 @@
 
 (defun lifted:flatten (base-signal)
   "Returns a signal merging the output of a signal-producing `base-signal'."
-  (lexical-let ((base-signal base-signal))
+  (let ((base-signal base-signal))
     (lifted:signal
      (lambda (subscriber)
-       (lexical-let ((subscriber subscriber))
+       (let ((subscriber subscriber))
          (funcall base-signal :subscribe-next
                   (lambda (value-signal)
                     (funcall value-signal :subscribe-next
@@ -100,11 +100,11 @@
 
 (defun lifted:filter (callback base-signal)
   "Returns a signal producing the output of the `base-signal', if `callback' returns true when applied."
-  (lexical-let ((callback callback)
-                (base-signal base-signal))
+  (let ((callback callback)
+        (base-signal base-signal))
     (lifted:signal
      (lambda (subscriber)
-       (lexical-let ((subscriber subscriber))
+       (let ((subscriber subscriber))
          (funcall base-signal :subscribe-next
                   (lambda (value)
                     (when (funcall callback value)
@@ -120,8 +120,8 @@
 
 (defun lifted:signal (body &optional subscribers)
   "Creates a 'signal' closure"
-  (lexical-let ((body body)
-                (subscribers subscribers))
+  (let ((body body)
+        (subscribers subscribers))
     (lambda (&rest commands)
       (if (not commands)
           (lifted:signal body subscribers)
@@ -148,7 +148,7 @@
 
 (defun lifted:subscriber (&rest commands)
   "Creates a 'subscriber' closure"
-  (lexical-let ((callbacks (make-hash-table)))
+  (let ((callbacks (make-hash-table)))
     (while commands
       (let ((command (pop commands))
             (callback (pop commands)))
@@ -168,7 +168,7 @@
 (defun lifted:signal-for-key (key &optional key-map)
   "Returns a signal that emits `t' each time is `key' is pressed.
 Binds to `key-map' if supplied, defaults to the global map."
-  (lexical-let ((subscribers '()))
+  (let ((subscribers '()))
     (define-key (or key-map (current-global-map)) key
       (lambda ()
         (interactive)

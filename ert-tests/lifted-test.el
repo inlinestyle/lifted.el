@@ -1,6 +1,7 @@
+;;; -*- lexical-binding: t -*-
+
 (require 'ert)
 (require 'lifted)
-
 
 ;; Some helper fixtures & methods
 
@@ -25,7 +26,7 @@
 (defun lifted:make-test-signal ()
   (lifted:signal
    (lambda (subscriber)
-     (lexical-let ((subscriber subscriber))
+     (let ((subscriber subscriber))
        (add-to-list 'lifted:test-hooks
                     (lambda (value) (funcall subscriber :send-next value)))))))
 
@@ -92,7 +93,7 @@
 (ert-deftest lifted-test-filter ()
   (lifted:clear-test-fixtures)
   (let* ((test-signal (lifted:make-test-signal))
-         (test-filter-signal (lifted:filter (lambda (value) (evenp value)) test-signal)))
+         (test-filter-signal (lifted:filter (lambda (value) (= (% value 2) 0)) test-signal)))
     (funcall test-signal :subscribe-next
              (lambda (value) (lifted:log "%s" value)))
     (funcall test-filter-signal :subscribe-next
@@ -115,13 +116,13 @@ input to the mapping function that spawned the signal.
 -> We set up two subscribers to the resulting 'signal of signals' to make
 sure that our mapping function gets called for each."
   (lifted:clear-test-fixtures)
-  (lexical-let* ((external-hooks '()))
+  (let* ((external-hooks '()))
     (let* ((test-signal (lifted:make-test-signal))
            (test-flatten-map-signal (lifted:flatten-map
                                      (lambda (local-value)
-                                       (lexical-let ((local-value local-value))
+                                       (let ((local-value local-value))
                                          (lifted:signal (lambda (subscriber)
-                                                          (lexical-let ((subscriber subscriber))
+                                                          (let ((subscriber subscriber))
                                                             (add-to-list 'external-hooks
                                                                          (lambda (external-value)
                                                                            (lifted:log "in-map-to-external-signal")

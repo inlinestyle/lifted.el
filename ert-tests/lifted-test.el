@@ -6,6 +6,7 @@
 ;; Some helper fixtures & methods
 
 (defvar lifted:test-hooks '())
+(defvar lifted:external-hooks '())
 (defvar lifted:test-log '())
 
 (defun lifted:clear-test-fixtures ()
@@ -116,46 +117,45 @@ input to the mapping function that spawned the signal.
 -> We set up two subscribers to the resulting 'signal of signals' to make
 sure that our mapping function gets called for each."
   (lifted:clear-test-fixtures)
-  (let* ((external-hooks '()))
-    (let* ((test-signal (lifted:make-test-signal))
-           (test-flatten-map-signal (lifted:flatten-map
-                                     (lambda (local-value)
-                                       (let ((local-value local-value))
-                                         (lifted:signal (lambda (subscriber)
-                                                          (let ((subscriber subscriber))
-                                                            (add-to-list 'external-hooks
-                                                                         (lambda (external-value)
-                                                                           (lifted:log "in-map-to-external-signal")
-                                                                           (funcall subscriber :send-next (format "%s:%s" local-value external-value)))))))))
-                                     test-signal)))
-      (funcall test-signal :subscribe-next
-               (lambda (value) (lifted:log "%s:subscribed0" value)))
-      (funcall test-flatten-map-signal :subscribe-next
-               (lambda (value) (lifted:log "%s:subscribed1" value)))
-      (funcall test-flatten-map-signal :subscribe-next
-               (lambda (value) (lifted:log "%s:subscribed2" value)))
-      (lifted:log-should-equal '())
-      (lifted:trigger-test-hooks "local0")
-      (dolist (hook external-hooks) (funcall hook "external0"))
-      (dolist (hook external-hooks) (funcall hook "external1"))
-      (lifted:trigger-test-hooks "local1")
-      (dolist (hook external-hooks) (funcall hook "external2"))
-      (lifted:log-should-equal '("local0:external2:subscribed2"
-                                 "in-map-to-external-signal"
-                                 "local0:external2:subscribed1"
-                                 "in-map-to-external-signal"
-                                 "local1:external2:subscribed2"
-                                 "in-map-to-external-signal"
-                                 "local1:external2:subscribed1"
-                                 "in-map-to-external-signal"
-                                 "local1:subscribed0"
-                                 "local0:external1:subscribed2"
-                                 "in-map-to-external-signal"
-                                 "local0:external1:subscribed1"
-                                 "in-map-to-external-signal"
-                                 "local0:external0:subscribed2"
-                                 "in-map-to-external-signal"
-                                 "local0:external0:subscribed1"
-                                 "in-map-to-external-signal"
-                                 "local0:subscribed0")))))
+  (let* ((test-signal (lifted:make-test-signal))
+         (test-flatten-map-signal (lifted:flatten-map
+                                   (lambda (local-value)
+                                     (let ((local-value local-value))
+                                       (lifted:signal (lambda (subscriber)
+                                                        (let ((subscriber subscriber))
+                                                          (add-to-list 'lifted:external-hooks
+                                                                       (lambda (external-value)
+                                                                         (lifted:log "in-map-to-external-signal")
+                                                                         (funcall subscriber :send-next (format "%s:%s" local-value external-value)))))))))
+                                   test-signal)))
+    (funcall test-signal :subscribe-next
+             (lambda (value) (lifted:log "%s:subscribed0" value)))
+    (funcall test-flatten-map-signal :subscribe-next
+             (lambda (value) (lifted:log "%s:subscribed1" value)))
+    (funcall test-flatten-map-signal :subscribe-next
+             (lambda (value) (lifted:log "%s:subscribed2" value)))
+    (lifted:log-should-equal '())
+    (lifted:trigger-test-hooks "local0")
+    (dolist (hook lifted:external-hooks) (funcall hook "external0"))
+    (dolist (hook lifted:external-hooks) (funcall hook "external1"))
+    (lifted:trigger-test-hooks "local1")
+    (dolist (hook lifted:external-hooks) (funcall hook "external2"))
+    (lifted:log-should-equal '("local0:external2:subscribed2"
+                               "in-map-to-external-signal"
+                               "local0:external2:subscribed1"
+                               "in-map-to-external-signal"
+                               "local1:external2:subscribed2"
+                               "in-map-to-external-signal"
+                               "local1:external2:subscribed1"
+                               "in-map-to-external-signal"
+                               "local1:subscribed0"
+                               "local0:external1:subscribed2"
+                               "in-map-to-external-signal"
+                               "local0:external1:subscribed1"
+                               "in-map-to-external-signal"
+                               "local0:external0:subscribed2"
+                               "in-map-to-external-signal"
+                               "local0:external0:subscribed1"
+                               "in-map-to-external-signal"
+                               "local0:subscribed0"))))
 

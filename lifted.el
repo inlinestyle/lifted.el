@@ -165,17 +165,18 @@
 
 ;; UI Utilities
 
+(defvar lifted--signal-for-key-subscribers '())
+
 (defun lifted:signal-for-key (key &optional key-map)
   "Returns a signal that emits `t' each time is `key' is pressed.
 Binds to `key-map' if supplied, defaults to the global map."
-  (let ((subscribers '()))
-    (define-key (or key-map (current-global-map)) key
-      (lambda ()
-        (interactive)
-        (dolist (subscriber subscribers)
-          (funcall subscriber :send-next t))))
-    (lifted:signal (lambda (subscriber)
-                     (add-to-list 'subscribers subscriber)))))
+  (define-key (or key-map (current-global-map)) key
+    (lambda ()
+      (interactive)
+      (dolist (subscriber lifted--signal-for-key-subscribers)
+        (funcall subscriber :send-next t))))
+  (lifted:signal (lambda (subscriber)
+                   (add-to-list 'lifted--signal-for-key-subscribers subscriber))))
 
 (provide 'lifted)
 

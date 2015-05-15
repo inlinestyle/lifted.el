@@ -15,7 +15,7 @@
 ;;  - real scheduling (possibly using deferred.el)
 ;;  - nice UI helpers (keyboard binding, command binding, etc)
 ;;  - lots and lots of functional operators
-;;  - signal merging
+;;  - various signal combination/reduce helpers
 ;;  - multicasting
 ;;  - signal disposal
 ;;  - a real concept of "sequences"
@@ -69,6 +69,11 @@
 ;;          :map (lambda (val) (round val))
 ;;          :filter (lambda (val) (evenp val))
 ;;          :subscribe-next (lambda (val) (message "subscriber 3 reporting even timestamp: %s" val)))
+
+;; ** Merging
+
+;; (funcall (lifted:merged key-signal post-command-signal)
+;;          :subscribe-next (lambda (val) (message "got key or command: %s" val)))
 
 ;;; Code:
 

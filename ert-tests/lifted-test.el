@@ -11,6 +11,7 @@
 
 (defun lifted:clear-test-fixtures ()
   (setq lifted:test-hooks '())
+  (setq lifted:external-hooks '())
   (setq lifted:test-log '()))
 
 (defun lifted:log-should-equal (log)
@@ -24,11 +25,22 @@
   (dolist (hook lifted:test-hooks)
     (funcall hook value)))
 
+(defun lifted:trigger-external-hooks (value)
+  (dolist (hook lifted:external-hooks)
+    (funcall hook value)))
+
 (defun lifted:make-test-signal ()
   (lifted:signal
    (lambda (subscriber)
      (let ((subscriber subscriber))
        (add-to-list 'lifted:test-hooks
+                    (lambda (value) (funcall subscriber :send-next value)))))))
+
+(defun lifted:make-external-signal ()
+  (lifted:signal
+   (lambda (subscriber)
+     (let ((subscriber subscriber))
+       (add-to-list 'lifted:external-hooks
                     (lambda (value) (funcall subscriber :send-next value)))))))
 
 ;; Actual tests
@@ -107,6 +119,25 @@
     (lifted:trigger-test-hooks 3)
     (lifted:log-should-equal '("3" "2" "2" "4" "4" "7" "6" "6"))))
 
+(ert-deftest lifted-test-merged ()
+  (lifted:clear-test-fixtures)
+  (let* ((test-signal (lifted:make-test-signal))
+         (external-signal (lifted:make-external-signal))
+         (merged-signal (lifted:merged test-signal external-signal)))
+    (funcall merged-signal :subscribe-next
+             (lambda (value) (lifted:log "merged:%s" value)))
+    (lifted:log-should-equal '())
+    (lifted:trigger-test-hooks "testing0")
+    (lifted:trigger-external-hooks "external0")
+    (lifted:trigger-test-hooks "testing1")
+    (lifted:trigger-external-hooks "external1")
+    (lifted:trigger-test-hooks "testing2")
+    (lifted:log-should-equal '("merged:testing2"
+                               "merged:external1"
+                               "merged:testing1"
+                               "merged:external0"
+                               "merged:testing0"))))
+
 (ert-deftest lifted-test-flatten-map-with-multiple-subscribers ()
   "Tests lifted:flatten-map.
 -> Our test mapping function takes a string, and returns a signal wired up
@@ -136,10 +167,10 @@ sure that our mapping function gets called for each."
              (lambda (value) (lifted:log "%s:subscribed2" value)))
     (lifted:log-should-equal '())
     (lifted:trigger-test-hooks "local0")
-    (dolist (hook lifted:external-hooks) (funcall hook "external0"))
-    (dolist (hook lifted:external-hooks) (funcall hook "external1"))
+    (lifted:trigger-external-hooks "external0")
+    (lifted:trigger-external-hooks "external1")
     (lifted:trigger-test-hooks "local1")
-    (dolist (hook lifted:external-hooks) (funcall hook "external2"))
+    (lifted:trigger-external-hooks "external2")
     (lifted:log-should-equal '("local0:external2:subscribed2"
                                "in-map-to-external-signal"
                                "local0:external2:subscribed1"

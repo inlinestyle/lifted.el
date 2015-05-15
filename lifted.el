@@ -112,9 +112,16 @@
                                value)))))))))
 
 (defun lifted:flatten-map (callback base-signal)
-  "Returns a signal merging the output of all signals produced when `callback' is mapped over `base-signal'"
+  "Returns a signal merging the output of all signals produced when `callback' is mapped over `base-signal'."
   (lifted:flatten (lifted:map callback base-signal)))
 
+(defun lifted:merged (&rest base-signals)
+  "Returns a signal merging the output of all given `base-signals'."
+  (lifted:flatten
+   (lifted:signal
+    (lambda (subscriber)
+      (dolist (base-signal base-signals)
+        (funcall subscriber :send-next base-signal))))))
 
 ;; "Objects"
 

@@ -26,17 +26,17 @@
   (run-hook-with-args 'lifted:test-hook-1 value))
 
 (defun lifted:make-test-signal-0 ()
-  (lifted:signal-for-hook-with-args 'lifted:test-hook-0))
+  (lifted:map 'car (lifted:signal-for-hook-with-args 'lifted:test-hook-0)))
 
 (defun lifted:make-test-signal-1 ()
-  (lifted:signal-for-hook-with-args 'lifted:test-hook-1))
+  (lifted:map 'car (lifted:signal-for-hook-with-args 'lifted:test-hook-1)))
 
 ;; Actual tests
 
 (ert-deftest lifted-test-signal-subscribe-next ()
   (lifted:clear-test-fixtures)
   (funcall (lifted:make-test-signal-0) :subscribe-next
-           (lambda (value) (lifted:log (car value))))
+           (lambda (value) (lifted:log value)))
   (lifted:log-should-equal '())
   (lifted:trigger-test-hook-0 "testing")
   (lifted:log-should-equal '("testing")))
@@ -45,9 +45,9 @@
   (lifted:clear-test-fixtures)
   (let ((test-signal (lifted:make-test-signal-0)))
     (funcall test-signal :subscribe-next
-             (lambda (value) (lifted:log "%s0" (car value))))
+             (lambda (value) (lifted:log "%s0" value)))
     (funcall test-signal :subscribe-next
-             (lambda (value) (lifted:log "%s1" (car value))))
+             (lambda (value) (lifted:log "%s1" value)))
     (lifted:log-should-equal '())
     (lifted:trigger-test-hook-0 "testing")
     (lifted:log-should-equal '("testing0" "testing1"))))
@@ -64,9 +64,9 @@
 (ert-deftest lifted-test-map ()
   (lifted:clear-test-fixtures)
   (let* ((test-signal (lifted:make-test-signal-0))
-         (test-map-signal (lifted:map (lambda (value) (* (car value) 3)) test-signal)))
+         (test-map-signal (lifted:map (lambda (value) (* value 3)) test-signal)))
     (funcall test-signal :subscribe-next
-             (lambda (value) (lifted:log "%s" (car value))))
+             (lambda (value) (lifted:log "%s" value)))
     (funcall test-map-signal :subscribe-next
              (lambda (value) (lifted:log "%s" value)))
     (lifted:log-should-equal '())
@@ -78,7 +78,7 @@
   (let* ((test-signal (lifted:make-test-signal-0))
          (test-map-signal (lifted:map (lambda (value)
                                         (lifted:log "in-map")
-                                        (format "%s:mapped" (car value)))
+                                        (format "%s:mapped" value))
                                       test-signal)))
     (funcall test-map-signal :subscribe-next
              (lambda (value) (lifted:log "%s:subscribed0" value)))
@@ -94,11 +94,11 @@
 (ert-deftest lifted-test-filter ()
   (lifted:clear-test-fixtures)
   (let* ((test-signal (lifted:make-test-signal-0))
-         (test-filter-signal (lifted:filter (lambda (value) (= (% (car value) 2) 0)) test-signal)))
+         (test-filter-signal (lifted:filter (lambda (value) (= (% value 2) 0)) test-signal)))
     (funcall test-signal :subscribe-next
-             (lambda (value) (lifted:log "%s" (car value))))
+             (lambda (value) (lifted:log "%s" value)))
     (funcall test-filter-signal :subscribe-next
-             (lambda (value) (lifted:log "%s" (car value))))
+             (lambda (value) (lifted:log "%s" value)))
     (lifted:log-should-equal '())
     (lifted:trigger-test-hook-0 6)
     (lifted:trigger-test-hook-0 7)
@@ -113,7 +113,7 @@
          (test-signal-1 (lifted:make-test-signal-1))
          (merged-signal (lifted:merged test-signal-0 test-signal-1)))
     (funcall merged-signal :subscribe-next
-             (lambda (value) (lifted:log "merged:%s" (car value))))
+             (lambda (value) (lifted:log "merged:%s" value)))
     (lifted:log-should-equal '())
     (lifted:trigger-test-hook-0 "test-0-0")
     (lifted:trigger-test-hook-1 "test-1-0")
@@ -144,11 +144,11 @@ sure that our mapping function gets called for each."
                                      (lifted:make-test-signal-1))
                                    test-signal)))
     (funcall test-signal :subscribe-next
-             (lambda (value) (lifted:log "%s:subscribed0" (car value))))
+             (lambda (value) (lifted:log "%s:subscribed0" value)))
     (funcall test-flatten-map-signal :subscribe-next
-             (lambda (value) (lifted:log "%s:subscribed1" (car value))))
+             (lambda (value) (lifted:log "%s:subscribed1" value)))
     (funcall test-flatten-map-signal :subscribe-next
-             (lambda (value) (lifted:log "%s:subscribed2" (car value))))
+             (lambda (value) (lifted:log "%s:subscribed2" value)))
     (lifted:log-should-equal '())
     (lifted:trigger-test-hook-0 "local0")
     (lifted:trigger-test-hook-1 "external0")

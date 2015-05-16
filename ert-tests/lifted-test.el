@@ -32,16 +32,14 @@
 (defun lifted:make-test-signal ()
   (lifted:signal
    (lambda (subscriber)
-     (let ((subscriber subscriber))
-       (add-to-list 'lifted:test-hooks
-                    (lambda (value) (funcall subscriber :send-next value)))))))
+     (add-to-list 'lifted:test-hooks
+                  (lambda (value) (funcall subscriber :send-next value))))))
 
 (defun lifted:make-external-signal ()
   (lifted:signal
    (lambda (subscriber)
-     (let ((subscriber subscriber))
-       (add-to-list 'lifted:external-hooks
-                    (lambda (value) (funcall subscriber :send-next value)))))))
+     (add-to-list 'lifted:external-hooks
+                  (lambda (value) (funcall subscriber :send-next value))))))
 
 ;; Actual tests
 
@@ -151,13 +149,11 @@ sure that our mapping function gets called for each."
   (let* ((test-signal (lifted:make-test-signal))
          (test-flatten-map-signal (lifted:flatten-map
                                    (lambda (local-value)
-                                     (let ((local-value local-value))
-                                       (lifted:signal (lambda (subscriber)
-                                                        (let ((subscriber subscriber))
-                                                          (add-to-list 'lifted:external-hooks
-                                                                       (lambda (external-value)
-                                                                         (lifted:log "in-map-to-external-signal")
-                                                                         (funcall subscriber :send-next (format "%s:%s" local-value external-value)))))))))
+                                     (lifted:signal (lambda (subscriber)
+                                                      (add-to-list 'lifted:external-hooks
+                                                                   (lambda (external-value)
+                                                                     (lifted:log "in-map-to-external-signal")
+                                                                     (funcall subscriber :send-next (format "%s:%s" local-value external-value)))))))
                                    test-signal)))
     (funcall test-signal :subscribe-next
              (lambda (value) (lifted:log "%s:subscribed0" value)))

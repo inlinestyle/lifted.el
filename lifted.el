@@ -81,40 +81,35 @@
 
 (defun lifted:map (callback base-signal)
   "Returns a signal producing the output of the `base-signal', with `callback' applied."
-  (let ((callback callback)
-        (base-signal base-signal))
-    (lifted:signal
-     (lambda (subscriber)
-       (let ((subscriber subscriber))
-         (funcall base-signal :subscribe-next
-                  (lambda (value)
-                    (funcall subscriber :send-next
-                             (funcall callback value)))))))))
+  (lifted:signal
+   (lambda (subscriber)
+     (let ((subscriber subscriber))
+       (funcall base-signal :subscribe-next
+                (lambda (value)
+                  (funcall subscriber :send-next
+                           (funcall callback value))))))))
 
 (defun lifted:flatten (base-signal)
   "Returns a signal merging the output of a signal-producing `base-signal'."
-  (let ((base-signal base-signal))
-    (lifted:signal
-     (lambda (subscriber)
-       (let ((subscriber subscriber))
-         (funcall base-signal :subscribe-next
-                  (lambda (value-signal)
-                    (funcall value-signal :subscribe-next
-                             (lambda (value)
-                               (funcall subscriber :send-next value))))))))))
+  (lifted:signal
+   (lambda (subscriber)
+     (let ((subscriber subscriber))
+       (funcall base-signal :subscribe-next
+                (lambda (value-signal)
+                  (funcall value-signal :subscribe-next
+                           (lambda (value)
+                             (funcall subscriber :send-next value)))))))))
 
 (defun lifted:filter (callback base-signal)
   "Returns a signal producing the output of the `base-signal', if `callback' returns true when applied."
-  (let ((callback callback)
-        (base-signal base-signal))
-    (lifted:signal
-     (lambda (subscriber)
-       (let ((subscriber subscriber))
-         (funcall base-signal :subscribe-next
-                  (lambda (value)
-                    (when (funcall callback value)
-                      (funcall subscriber :send-next
-                               value)))))))))
+  (lifted:signal
+   (lambda (subscriber)
+     (let ((subscriber subscriber))
+       (funcall base-signal :subscribe-next
+                (lambda (value)
+                  (when (funcall callback value)
+                    (funcall subscriber :send-next
+                             value))))))))
 
 (defun lifted:flatten-map (callback base-signal)
   "Returns a signal merging the output of all signals produced when `callback' is mapped over `base-signal'."
@@ -132,31 +127,29 @@
 
 (defun lifted:signal (body &optional subscribers)
   "Creates a 'signal' closure"
-  (let ((body body)
-        (subscribers subscribers))
-    (lambda (&rest commands)
-      (if (not commands)
-          (lifted:signal body subscribers)
-        (let ((command (pop commands))
-              (callback (pop commands)))
-          (unless callback
-            (error "Missing callback for %s" command))
-          (let ((new-signal (pcase command
-                              (:map
-                               (lifted:map callback (lifted:signal body subscribers)))
-                              (:filter
-                               (lifted:filter callback (lifted:signal body subscribers)))
-                              (:flatten-map
-                               (lifted:flatten-map callback (lifted:signal body subscribers)))
-                              (:subscribe-next
-                               (let ((subscriber (lifted:subscriber :next callback)))
-                                 (funcall body subscriber)
-                                 (lifted:signal body (cons subscriber subscribers))))
-                              (:subscribe-completed
-                               (let ((subscriber (lifted:subscriber :completed callback)))
-                                 (funcall body subscriber)
-                                 (lifted:signal body (cons subscriber subscribers)))))))
-            (apply new-signal commands)))))))
+  (lambda (&rest commands)
+    (if (not commands)
+        (lifted:signal body subscribers)
+      (let ((command (pop commands))
+            (callback (pop commands)))
+        (unless callback
+          (error "Missing callback for %s" command))
+        (let ((new-signal (pcase command
+                            (:map
+                             (lifted:map callback (lifted:signal body subscribers)))
+                            (:filter
+                             (lifted:filter callback (lifted:signal body subscribers)))
+                            (:flatten-map
+                             (lifted:flatten-map callback (lifted:signal body subscribers)))
+                            (:subscribe-next
+                             (let ((subscriber (lifted:subscriber :next callback)))
+                               (funcall body subscriber)
+                               (lifted:signal body (cons subscriber subscribers))))
+                            (:subscribe-completed
+                             (let ((subscriber (lifted:subscriber :completed callback)))
+                               (funcall body subscriber)
+                               (lifted:signal body (cons subscriber subscribers)))))))
+          (apply new-signal commands))))))
 
 (defun lifted:subscriber (&rest commands)
   "Creates a 'subscriber' closure"

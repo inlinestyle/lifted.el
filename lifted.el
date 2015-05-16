@@ -188,13 +188,21 @@ Binds to `key-map' if supplied, defaults to the global map."
                    (add-to-list 'lifted--signal-for-key-subscribers subscriber))))
 
 (defun lifted:signal-for-hook (hook)
-  "Returns a signal that emits `t' each time `hook' is run.
-TODO: write a version that passes hook arguments."
+  "Returns a signal that emits `t' each time `hook' is run."
   (lifted:signal
    (lambda (subscriber)
      (add-hook hook
                (lambda ()
                  (funcall subscriber :send-next t))))))
+
+(defun lifted:signal-for-hook-with-args (hook)
+  "Returns a signal that emits `t' each time `hook' is run.
+Assumes & passes along hook arguments."
+  (lifted:signal
+   (lambda (subscriber)
+     (add-hook hook
+               (lambda (&rest args)
+                 (funcall subscriber :send-next args))))))
 
 (provide 'lifted)
 

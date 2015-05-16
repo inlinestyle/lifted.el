@@ -5,13 +5,11 @@
 
 ;; Some helper fixtures & methods
 
-(defvar lifted:test-hooks '())
-(defvar lifted:external-hooks '())
 (defvar lifted:test-log '())
 
 (defun lifted:clear-test-fixtures ()
-  (setq lifted:test-hooks '())
-  (setq lifted:external-hooks '())
+  (setq lifted:test-hook-0 '())
+  (setq lifted:test-hook-1 '())
   (setq lifted:test-log '()))
 
 (defun lifted:log-should-equal (log)

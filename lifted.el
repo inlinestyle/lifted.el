@@ -178,7 +178,8 @@
 
 (defun lifted:signal-for-key (key &optional key-map)
   "Returns a signal that emits `t' each time is `key' is pressed.
-Binds to `key-map' if supplied, defaults to the global map."
+Binds to `key-map' if supplied, defaults to the global map.
+We need to keep global state here so that multiple signals for the same key don't erase eachother."
   (define-key (or key-map (current-global-map)) key
     (lambda ()
       (interactive)

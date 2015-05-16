@@ -126,7 +126,7 @@
               (lambda (value)
                 (deferred:$
                   (deferred:next
-                    (funcall subscriber :send-next value))))))))
+                    (lambda () (funcall subscriber :send-next value)))))))))
 
 (defun lifted:merge (&rest base-signals)
   "Returns a signal merging the output of all given `base-signals'."

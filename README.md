@@ -4,3 +4,4 @@ Functional reactive programming library for Emacs Lisp
 
 ## Acknowledgements
  - https://github.com/rolandwalker/emacs-travis
+ - https://github.com/kiwanami/emacs-deferred

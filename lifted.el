@@ -81,45 +81,54 @@
 
 ;;; Code:
 
+(require 'deferred)
+
 ;; Operators
 
 (defun lifted:map (callback base-signal)
   "Returns a signal producing the output of the `base-signal', with `callback' applied."
   (lifted:signal
    (lambda (subscriber)
-     (let ((subscriber subscriber))
-       (funcall base-signal :subscribe-next
-                (lambda (value)
-                  (funcall subscriber :send-next
-                           (funcall callback value))))))))
+     (funcall base-signal :subscribe-next
+              (lambda (value)
+                (funcall subscriber :send-next
+                         (funcall callback value)))))))
 
 (defun lifted:flatten (base-signal)
   "Returns a signal merging the output of a signal-producing `base-signal'."
   (lifted:signal
    (lambda (subscriber)
-     (let ((subscriber subscriber))
-       (funcall base-signal :subscribe-next
-                (lambda (value-signal)
-                  (funcall value-signal :subscribe-next
-                           (lambda (value)
-                             (funcall subscriber :send-next value)))))))))
+     (funcall base-signal :subscribe-next
+              (lambda (value-signal)
+                (funcall value-signal :subscribe-next
+                         (lambda (value)
+                           (funcall subscriber :send-next value))))))))
 
 (defun lifted:filter (callback base-signal)
   "Returns a signal producing the output of the `base-signal', if `callback' returns true when applied."
   (lifted:signal
    (lambda (subscriber)
-     (let ((subscriber subscriber))
-       (funcall base-signal :subscribe-next
-                (lambda (value)
-                  (when (funcall callback value)
-                    (funcall subscriber :send-next
-                             value))))))))
+     (funcall base-signal :subscribe-next
+              (lambda (value)
+                (when (funcall callback value)
+                  (funcall subscriber :send-next
+                           value)))))))
 
 (defun lifted:flatten-map (callback base-signal)
   "Returns a signal merging the output of all signals produced when `callback' is mapped over `base-signal'."
   (lifted:flatten (lifted:map callback base-signal)))
 
-(defun lifted:merged (&rest base-signals)
+(defun lifted:defer (base-signal)
+  "Returns a signal which defers the output of the input signal (i.e. any subscribers will get the output asynchronously)"
+  (lifted:signal
+   (lambda (subscriber)
+     (funcall base-signal :subscribe-next
+              (lambda (value)
+                (deferred:$
+                  (deferred:next
+                    (funcall subscriber :send-next value))))))))
+
+(defun lifted:merge (&rest base-signals)
   "Returns a signal merging the output of all given `base-signals'."
   (lifted:flatten
    (lifted:signal

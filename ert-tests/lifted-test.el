@@ -107,11 +107,11 @@
     (lifted:trigger-test-hook-0 3)
     (lifted:log-should-equal '("3" "2" "2" "4" "4" "7" "6" "6"))))
 
-(ert-deftest lifted-test-merged ()
+(ert-deftest lifted-test-merge ()
   (lifted:clear-test-fixtures)
   (let* ((test-signal-0 (lifted:make-test-signal-0))
          (test-signal-1 (lifted:make-test-signal-1))
-         (merged-signal (lifted:merged test-signal-0 test-signal-1)))
+         (merged-signal (lifted:merge test-signal-0 test-signal-1)))
     (funcall merged-signal :subscribe-next
              (lambda (value) (lifted:log "merged:%s" value)))
     (lifted:log-should-equal '())

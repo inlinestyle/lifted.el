@@ -13,14 +13,16 @@ TEST_DIR=ert-tests
 TEST_DEP_1=ert
 TEST_DEP_1_STABLE_URL=http://git.savannah.gnu.org/cgit/emacs.git/plain/lisp/emacs-lisp/ert.el?h=emacs-24.3
 TEST_DEP_1_LATEST_URL=http://git.savannah.gnu.org/cgit/emacs.git/plain/lisp/emacs-lisp/ert.el?h=master
-
+TEST_DEP_2=deferred
+TEST_DEP_2_STABLE_URL=https://raw.githubusercontent.com/kiwanami/emacs-deferred/v0.3.2/deferred.el
+TEST_DEP_2_LATEST_URL=https://raw.githubusercontent.com/kiwanami/emacs-deferred/master/deferred.el
 
 .PHONY : build downloads downloads-latest autoloads test-autoloads test-travis \
          test test-interactive clean edit test-dep-1 test-dep-2 test-dep-3     \
          test-dep-4 test-dep-5 test-dep-6 test-dep-7 test-dep-8 test-dep-9
 
 build :
-	$(EMACS) $(EMACS_BATCH) --eval             \
+	$(EMACS) $(EMACS_BATCH) -l $(TEST_DIR)/$(TEST_DEP_1).el -l $(TEST_DIR)/$(TEST_DEP_2).el --eval             \
 	    "(progn                                \
 	      (setq byte-compile-error-on-warn t)  \
 	      (batch-byte-compile))" *.el
@@ -30,11 +32,18 @@ test-dep-1 :
 	$(EMACS) $(EMACS_BATCH)  -L . -L .. -l $(TEST_DEP_1) || \
 	(echo "Can't load test dependency $(TEST_DEP_1).el, run 'make downloads' to fetch it" ; exit 1)
 
+test-dep-2 :
+	@cd $(TEST_DIR)                                      && \
+	$(EMACS) $(EMACS_BATCH)  -L . -L .. -l $(TEST_DEP_2) || \
+	(echo "Can't load test dependency $(TEST_DEP_2).el, run 'make downloads' to fetch it" ; exit 1)
+
 downloads :
-	$(CURL) '$(TEST_DEP_1_STABLE_URL)' > $(TEST_DIR)/$(TEST_DEP_1).el
+	$(CURL) '$(TEST_DEP_1_STABLE_URL)' > $(TEST_DIR)/$(TEST_DEP_1).el && \
+	$(CURL) '$(TEST_DEP_2_STABLE_URL)' > $(TEST_DIR)/$(TEST_DEP_2).el
 
 downloads-latest :
-	$(CURL) '$(TEST_DEP_1_LATEST_URL)' > $(TEST_DIR)/$(TEST_DEP_1).el
+	$(CURL) '$(TEST_DEP_1_LATEST_URL)' > $(TEST_DIR)/$(TEST_DEP_1).el && \
+	$(CURL) '$(TEST_DEP_2_LATEST_URL)' > $(TEST_DIR)/$(TEST_DEP_2).el
 
 autoloads :
 	$(EMACS) $(EMACS_BATCH) --eval                       \
@@ -49,10 +58,10 @@ test-autoloads : autoloads
 test-travis :
 	@if test -z "$$TRAVIS" && test -e $(TRAVIS_FILE); then travis-lint $(TRAVIS_FILE); fi
 
-test : build test-dep-1 test-autoloads
+test : build test-dep-1 test-dep-2 test-autoloads
 	@cd $(TEST_DIR)                                   && \
 	(for test_lib in *-test.el; do                       \
-	    $(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l $(TEST_DEP_1) -l $$test_lib --eval \
+	    $(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l $(TEST_DEP_1) -l $(TEST_DEP_2) -l $$test_lib --eval \
 	    "(progn                                          \
 	      (fset 'ert--print-backtrace 'ignore)           \
 	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" (not (tag :interactive)))))" || exit 1; \

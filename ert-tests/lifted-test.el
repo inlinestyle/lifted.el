@@ -186,3 +186,15 @@ sure that our mapping function gets called for each."
                                "in-map-to-external-signal"
                                "local0:subscribed0"))))
 
+(ert-deftest lifted-test-signal-for-hook ()
+  (lifted:clear-test-fixtures)
+  (let ((hook-signal (lifted:signal-for-hook 'foo-hook)))
+    (funcall hook-signal :subscribe-next (lambda (value) (lifted:log "subscribed0:%s" value)))
+    (funcall hook-signal :subscribe-next (lambda (value) (lifted:log "subscribed1:%s" value)))
+    (lifted:log-should-equal '())
+    (let ((old-this-command this-command))
+      (setq this-command "foo")
+      (run-hooks 'foo-hook)
+      (setq this-command old-this-command))
+    (lifted:log-should-equal '("subscribed0:foo"
+                               "subscribed1:foo"))))

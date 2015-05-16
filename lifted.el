@@ -27,15 +27,19 @@
 
 ;; (defvar key-signal (lifted:signal-for-key (kbd "C-c s")))
 
+;; ** Making a hook signal
+
+;; (defvar post-command-signal (lifted:signal-for-hook 'post-command-hook))
+
 ;; ** Making a signal
 
 ;; (defvar post-command-signal
+;;   "Here we re-implement (lifted:signal-for-hook 'post-command-hook)"
 ;;   (lifted:signal
 ;;    (lambda (subscriber)
-;;      (lexical-let ((subscriber subscriber))
-;;        (add-hook 'post-command-hook
-;;                  (lambda ()
-;;                    (funcall subscriber :send-next this-command)))))))
+;;      (add-hook 'post-command-hook
+;;                (lambda ()
+;;                  (funcall subscriber :send-next this-command))))))
 
 ;; ** Subscribing
 
@@ -182,6 +186,13 @@ Binds to `key-map' if supplied, defaults to the global map."
         (funcall subscriber :send-next t))))
   (lifted:signal (lambda (subscriber)
                    (add-to-list 'lifted--signal-for-key-subscribers subscriber))))
+
+(defun lifted:signal-for-hook (hook)
+  (lifted:signal
+   (lambda (subscriber)
+     (add-hook hook
+               (lambda ()
+                 (funcall subscriber :send-next this-command))))))
 
 (provide 'lifted)
 

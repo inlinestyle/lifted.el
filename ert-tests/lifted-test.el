@@ -141,41 +141,29 @@ sure that our mapping function gets called for each."
   (let* ((test-signal (lifted:make-test-signal-0))
          (test-flatten-map-signal (lifted:flatten-map
                                    (lambda (local-value)
-                                     (lifted:signal (lambda (subscriber)
-                                                      (add-to-list 'lifted:test-hook-1
-                                                                   (lambda (external-value)
-                                                                     (lifted:log "in-map-to-external-signal")
-                                                                     (funcall subscriber :send-next (format "%s:%s" (car local-value) external-value)))))))
+                                     (lifted:make-test-signal-1))
                                    test-signal)))
     (funcall test-signal :subscribe-next
              (lambda (value) (lifted:log "%s:subscribed0" (car value))))
     (funcall test-flatten-map-signal :subscribe-next
-             (lambda (value) (lifted:log "%s:subscribed1" value)))
+             (lambda (value) (lifted:log "%s:subscribed1" (car value))))
     (funcall test-flatten-map-signal :subscribe-next
-             (lambda (value) (lifted:log "%s:subscribed2" value)))
+             (lambda (value) (lifted:log "%s:subscribed2" (car value))))
     (lifted:log-should-equal '())
     (lifted:trigger-test-hook-0 "local0")
     (lifted:trigger-test-hook-1 "external0")
     (lifted:trigger-test-hook-1 "external1")
     (lifted:trigger-test-hook-0 "local1")
     (lifted:trigger-test-hook-1 "external2")
-    (lifted:log-should-equal '("local0:external2:subscribed2"
-                               "in-map-to-external-signal"
-                               "local0:external2:subscribed1"
-                               "in-map-to-external-signal"
-                               "local1:external2:subscribed2"
-                               "in-map-to-external-signal"
-                               "local1:external2:subscribed1"
-                               "in-map-to-external-signal"
+    (lifted:log-should-equal '("external2:subscribed2"
+                               "external2:subscribed1"
+                               "external2:subscribed2"
+                               "external2:subscribed1"
                                "local1:subscribed0"
-                               "local0:external1:subscribed2"
-                               "in-map-to-external-signal"
-                               "local0:external1:subscribed1"
-                               "in-map-to-external-signal"
-                               "local0:external0:subscribed2"
-                               "in-map-to-external-signal"
-                               "local0:external0:subscribed1"
-                               "in-map-to-external-signal"
+                               "external1:subscribed2"
+                               "external1:subscribed1"
+                               "external0:subscribed2"
+                               "external0:subscribed1"
                                "local0:subscribed0"))))
 
 (ert-deftest lifted-test-signal-for-hook ()

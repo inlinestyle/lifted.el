@@ -192,9 +192,6 @@ sure that our mapping function gets called for each."
     (funcall hook-signal :subscribe-next (lambda (value) (lifted:log "subscribed0:%s" value)))
     (funcall hook-signal :subscribe-next (lambda (value) (lifted:log "subscribed1:%s" value)))
     (lifted:log-should-equal '())
-    (let ((old-this-command this-command))
-      (setq this-command "foo")
-      (run-hooks 'foo-hook)
-      (setq this-command old-this-command))
-    (lifted:log-should-equal '("subscribed0:foo"
-                               "subscribed1:foo"))))
+    (run-hooks 'foo-hook)
+    (lifted:log-should-equal '("subscribed0:t"
+                               "subscribed1:t"))))

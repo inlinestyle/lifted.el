@@ -34,7 +34,7 @@
 ;; ** Making a signal
 
 ;; (defvar post-command-signal
-;;   "Here we re-implement (lifted:signal-for-hook 'post-command-hook)"
+;;   "Could also do this using (lifted:signal-for-hook 'post-command-hook)"
 ;;   (lifted:signal
 ;;    (lambda (subscriber)
 ;;      (add-hook 'post-command-hook
@@ -188,11 +188,13 @@ Binds to `key-map' if supplied, defaults to the global map."
                    (add-to-list 'lifted--signal-for-key-subscribers subscriber))))
 
 (defun lifted:signal-for-hook (hook)
+  "Returns a signal that emits `t' each time `hook' is run.
+TODO: write a version that passes hook arguments."
   (lifted:signal
    (lambda (subscriber)
      (add-hook hook
                (lambda ()
-                 (funcall subscriber :send-next this-command))))))
+                 (funcall subscriber :send-next t))))))
 
 (provide 'lifted)
 

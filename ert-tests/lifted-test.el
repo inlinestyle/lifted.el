@@ -204,6 +204,18 @@
     (deferred:flush-queue!)
     (lifted:log-should-equal '("deferred"))))
 
+(ert-deftest lifted-test-defer-chaining ()
+  (lifted:clear-test-fixtures)
+  (let* ((test-signal (lifted:make-test-signal-0))
+         (deferred-signal (funcall test-signal :defer)))
+    (funcall deferred-signal :subscribe-next
+             (lambda (value) (lifted:log "%s" value)))
+    (lifted:log-should-equal '())
+    (lifted:trigger-test-hook-0 "deferred")
+    (lifted:log-should-equal '())
+    (deferred:flush-queue!)
+    (lifted:log-should-equal '("deferred"))))
+
 (ert-deftest lifted-test-signal-for-hook ()
   (lifted:clear-test-fixtures)
   (let ((hook-signal (lifted:signal-for-hook 'lifted:test-hook-0)))

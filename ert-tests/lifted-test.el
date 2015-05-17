@@ -140,6 +140,29 @@
                                "merged:test-1-0"
                                "merged:test-0-0"))))
 
+
+(ert-deftest lifted-test-merge-chaining ()
+  (lifted:clear-test-fixtures)
+  (let* ((test-signal-0 (lifted:make-test-signal-0))
+         (test-signal-1 (lifted:make-test-signal-1))
+         (merged-signal (funcall test-signal-0 :merge test-signal-1)))
+    (funcall merged-signal :subscribe-next
+             (lambda (value) (lifted:log "merged:%s" value)))
+    (lifted:log-should-equal '())
+    (lifted:trigger-test-hook-0 "test-0-0")
+    (lifted:trigger-test-hook-1 "test-1-0")
+    (lifted:trigger-test-hook-1 "test-1-1")
+    (lifted:trigger-test-hook-0 "test-0-1")
+    (lifted:trigger-test-hook-1 "test-1-2")
+    (lifted:trigger-test-hook-0 "test-0-2")
+    (lifted:log-should-equal '("merged:test-0-2"
+                               "merged:test-1-2"
+                               "merged:test-0-1"
+                               "merged:test-1-1"
+                               "merged:test-1-0"
+                               "merged:test-0-0"))))
+
+
 (ert-deftest lifted-test-flatten-map-with-multiple-subscribers ()
   (lifted:clear-test-fixtures)
   (let* ((test-signal (lifted:make-test-signal-0))

@@ -138,9 +138,14 @@
 
 ;; "Objects"
 
-(defvar lifted--no-arg-commands '(:flatten :defer))
+(defvar lifted--no-arg-commands '(:defer :flatten))
 (defun lifted--no-arg-dispatch (body subscribers command commands)
-  "TODO")
+  (let ((new-signal (pcase command
+                      (:defer
+                       (lifted:defer (lifted:signal body subscribers)))
+                      (:flatten
+                       (lifted:flatten (lifted:signal body subscribers))))))
+    (apply new-signal commands)))
 
 (defvar lifted--one-arg-commands '(:map :flatten-map :filter :subscribe-next :subscribe-completed :subscribe-error))
 (defun lifted--one-arg-dispatch (body subscribers command commands)
@@ -163,8 +168,15 @@
     (apply new-signal commands)))
 
 (defvar lifted--many-arg-commands '(:merge))
-(defun lifted--many-arg-dispatch (body subscribers command &rest args)
-  "TODO")
+(defun lifted--many-arg-dispatch (body subscribers command commands)
+  (let* ((args '()))
+    (while (and commands
+                (not (keywordp (car commands))))
+      (push (pop commands) args))
+    (let ((new-signal (pcase command
+                        (:merge
+                         (apply 'lifted:merge (cons (lifted:signal body subscribers) args))))))
+      (apply new-signal commands))))
 
 (defun lifted:signal (body &optional subscribers)
   "Creates a 'signal' closure"

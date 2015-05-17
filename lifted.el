@@ -12,14 +12,16 @@
 
 ;; This is a rough draft of an FRP library for Emacs. I'm working from a number of inspirations, primarily ReactiveCocoa and Elm.
 ;; Obviously there's a lot left to do, including but not limited to:
-;;  - real scheduling (possibly using deferred.el)
-;;  - nice UI helpers (keyboard binding, command binding, etc)
-;;  - lots and lots of functional operators
+;;  - many more functional operators
 ;;  - various signal combination/reduce helpers
+;;  - more diverse deferral options
 ;;  - multicasting
 ;;  - signal disposal
-;;  - a real concept of "sequences"
 ;;  - error handling
+;;  - sequences & cold signals
+;;  - possibly reducing the number of `funcall`s
+;;  - cask build
+;;  - getting on MELPA
 
 ;;; Samples (will almost certainly change):
 

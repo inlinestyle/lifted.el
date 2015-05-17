@@ -54,9 +54,7 @@
 
 ;; ** Functional operators
 
-;; (defvar timestamps-for-key (funcall key-signal :map (lambda (val) (float-time))))
-;;  --- equivalent to ---
-;; (defvar timestamps-for-key (lifted:map (lambda (val) (float-time)) key-signal))
+;; (lifted:map (lambda (val) (float-time)) key-signal)
 
 ;; Operators implemented so far:
 ;; - filter
@@ -74,6 +72,20 @@
 ;; (lifted:defer key-signal) ; Any subscribing action will be "deferred"
 
 ;; ** Chaining
+
+;; All "lifted:*" functions with the exceptions of `lifted:signal' and `lifted:subscriber' have a chained form.
+;; The chained version of the function is used by calling an existing signal with the "keyword form" of the function
+;; as an argument:
+
+;; (lifted:map (lambda (val) (float-time)) key-signal)
+
+;; Can be expressed as:
+
+;; (funcall key-signal :map (lambda (val) (float-time)))
+
+;; The "keyword form" is just the name of the function, with the "lifted:" part removed e.g. `lifted:flatten-map' -> `:flatten-map'.
+
+;; A more involved example:
 
 ;; (funcall key-signal
 ;;          :map (lambda (val) (float-time))

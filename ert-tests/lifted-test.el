@@ -216,6 +216,19 @@
     (deferred:flush-queue!)
     (lifted:log-should-equal '("deferred"))))
 
+(ert-deftest lifted-test-defer-map-chaining ()
+  (lifted:clear-test-fixtures)
+  (let* ((test-signal (lifted:make-test-signal-0)))
+    (funcall test-signal
+             :defer
+             :map (lambda (value) (* value 3))
+             :subscribe-next (lambda (value) (lifted:log "%s" value)))
+    (lifted:log-should-equal '())
+    (lifted:trigger-test-hook-0 6)
+    (lifted:log-should-equal '())
+    (deferred:flush-queue!)
+    (lifted:log-should-equal '("18"))))
+
 (ert-deftest lifted-test-signal-for-hook ()
   (lifted:clear-test-fixtures)
   (let ((hook-signal (lifted:signal-for-hook 'lifted:test-hook-0)))

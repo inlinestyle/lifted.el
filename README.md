@@ -22,9 +22,8 @@ Functional reactive programming library for Emacs Lisp
  - `lifted:map`
  - `lifted:merge`
 
-## TODO:
-This is a rough draft of an FRP library for Emacs. I'm working from a number of inspirations, primarily ReactiveCocoa and Elm.
-Obviously there's a lot left to do, including but not limited to:
+## TODO
+This is a rough draft of an FRP library for Emacs Lisp. I'm working from a number of inspirations, primarily [ReactiveCocoa](http://reactivecocoa.io) and [Elm](http://elm-lang.org). There's a lot left to do, including but not limited to:
  - many more functional operators
  - various signal combination/reduce helpers
  - more diverse deferral options
@@ -37,5 +36,5 @@ Obviously there's a lot left to do, including but not limited to:
  - getting on MELPA
 
 ## Acknowledgements
- - https://github.com/rolandwalker/emacs-travis
- - https://github.com/kiwanami/emacs-deferred
+ - [emacs-deferred](https://github.com/kiwanami/emacs-deferred)
+ - [emacs-travis](https://github.com/rolandwalker/emacs-travis)

@@ -10,7 +10,7 @@ This is a rough draft of an FRP library for Emacs Lisp. I'm working from a numbe
          :map            (lambda (value) (float-time))
          :defer
          :map            (lambda (value) (round value))
-         :filter         (lambda (value) (evenp value))
+         :filter         (lambda (value) (= (% value 2) 0))
          :subscribe-next (lambda (value)
                            (message "subscriber reporting even rounded timestamp: %s" value)))
 ```

@@ -11,7 +11,7 @@
 ;;; Commentary:
 
 ;; This is a rough draft of an FRP library for Emacs. I'm working from a number of inspirations, primarily ReactiveCocoa and Elm.
-;; Obviously there's a lot left to do, including but not limited to:
+;; There's a lot left to do, including but not limited to:
 ;;  - many more functional operators
 ;;  - various signal combination/reduce helpers
 ;;  - more diverse deferral options
@@ -56,7 +56,7 @@
 
 ;; ** Functional operators
 
-;; (lifted:map (lambda (val) (float-time)) key-signal)
+;; (lifted:map (lambda (value) (float-time)) key-signal)
 
 ;; Operators implemented so far:
 ;; - filter
@@ -67,7 +67,7 @@
 ;; ** Merging
 
 ;; (funcall (lifted:merge key-signal post-command-signal)
-;;          :subscribe-next (lambda (val) (message "got key or command: %s" val)))
+;;          :subscribe-next (lambda (value) (message "got key or command: %s" value)))
 
 ;; ** Deferring
 
@@ -79,24 +79,24 @@
 ;; The chained version of the function is used by calling an existing signal with the "keyword form" of the function
 ;; as an argument:
 
-;; (lifted:map (lambda (val) (float-time)) key-signal)
+;; (lifted:map (lambda (value) (float-time)) key-signal)
 
 ;; Can be expressed as:
 
-;; (funcall key-signal :map (lambda (val) (float-time)))
+;; (funcall key-signal :map (lambda (value) (float-time)))
 
 ;; The "keyword form" is just the name of the function, with the "lifted:" part removed e.g. `lifted:flatten-map' -> `:flatten-map'.
 
 ;; A more involved example:
 
 ;; (funcall key-signal
-;;          :map (lambda (val) (float-time))
-;;          :subscribe-next (lambda (val) (message "subscriber 1 reporting timestamp: %s" val))
-;;          :subscribe-next (lambda (val) (message "subscriber 2 reporting timestamp: %s" val))
+;;          :map            (lambda (value) (float-time))
+;;          :subscribe-next (lambda (value) (message "subscriber 1 reporting timestamp: %s" value))
+;;          :subscribe-next (lambda (value) (message "subscriber 2 reporting timestamp: %s" value))
 ;;          :defer
-;;          :map (lambda (val) (round val))
-;;          :filter (lambda (val) (evenp val))
-;;          :subscribe-next (lambda (val) (message "subscriber 3 reporting even timestamp: %s" val)))
+;;          :map            (lambda (value) (round value))
+;;          :filter         (lambda (value) (= (% value 2) 0))
+;;          :subscribe-next (lambda (value) (message "subscriber 3 reporting even timestamp: %s" value)))
 
 ;;; Code:
 

@@ -2,6 +2,7 @@
 Functional reactive programming library for Emacs Lisp
 
 ## Quick Look
+This is a rough draft of an FRP library for Emacs Lisp. I'm working from a number of inspirations, primarily [ReactiveCocoa](http://reactivecocoa.io) and [Elm](http://elm-lang.org).
 ```elisp
 (defvar key-signal (lifted:signal-for-key (kbd "C-c s")))
 
@@ -23,7 +24,7 @@ Functional reactive programming library for Emacs Lisp
  - `lifted:merge`
 
 ## TODO
-This is a rough draft of an FRP library for Emacs Lisp. I'm working from a number of inspirations, primarily [ReactiveCocoa](http://reactivecocoa.io) and [Elm](http://elm-lang.org). There's a lot left to do, including but not limited to:
+There's a ton left to do!
  - many more functional operators
  - various signal combination/reduce helpers
  - more diverse deferral options

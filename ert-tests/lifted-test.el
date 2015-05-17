@@ -73,6 +73,18 @@
     (lifted:trigger-test-hook-0 6)
     (lifted:log-should-equal '("6" "18"))))
 
+(ert-deftest lifted-test-map-chaining ()
+  (lifted:clear-test-fixtures)
+    (let* ((test-signal (lifted:make-test-signal-0))
+         (test-map-signal (funcall test-signal :map (lambda (value) (* value 3)))))
+    (funcall test-signal :subscribe-next
+             (lambda (value) (lifted:log "%s" value)))
+    (funcall test-map-signal :subscribe-next
+             (lambda (value) (lifted:log "%s" value)))
+    (lifted:log-should-equal '())
+    (lifted:trigger-test-hook-0 6)
+    (lifted:log-should-equal '("6" "18"))))
+
 (ert-deftest lifted-test-map-with-multiple-subscribers ()
   (lifted:clear-test-fixtures)
   (let* ((test-signal (lifted:make-test-signal-0))

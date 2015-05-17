@@ -139,26 +139,28 @@
 ;; "Objects"
 
 (defvar lifted--no-arg-commands '(:flatten :defer))
-(defun lifted--no-arg-dispatch (body subscribers command)
+(defun lifted--no-arg-dispatch (body subscribers command commands)
   "TODO")
 
 (defvar lifted--one-arg-commands '(:map :flatten-map :filter :subscribe-next :subscribe-completed :subscribe-error))
-(defun lifted--one-arg-dispatch (body subscribers command callback)
-  (pcase command
-    (:map
-     (lifted:map callback (lifted:signal body subscribers)))
-    (:filter
-     (lifted:filter callback (lifted:signal body subscribers)))
-    (:flatten-map
-     (lifted:flatten-map callback (lifted:signal body subscribers)))
-    (:subscribe-next
-     (let ((subscriber (lifted:subscriber :next callback)))
-       (funcall body subscriber)
-       (lifted:signal body (cons subscriber subscribers))))
-    (:subscribe-completed
-     (let ((subscriber (lifted:subscriber :completed callback)))
-       (funcall body subscriber)
-       (lifted:signal body (cons subscriber subscribers))))))
+(defun lifted--one-arg-dispatch (body subscribers command commands)
+  (let* ((callback (pop commands))
+         (new-signal (pcase command
+                       (:map
+                        (lifted:map callback (lifted:signal body subscribers)))
+                       (:filter
+                        (lifted:filter callback (lifted:signal body subscribers)))
+                       (:flatten-map
+                        (lifted:flatten-map callback (lifted:signal body subscribers)))
+                       (:subscribe-next
+                        (let ((subscriber (lifted:subscriber :next callback)))
+                          (funcall body subscriber)
+                          (lifted:signal body (cons subscriber subscribers))))
+                       (:subscribe-completed
+                        (let ((subscriber (lifted:subscriber :completed callback)))
+                          (funcall body subscriber)
+                          (lifted:signal body (cons subscriber subscribers)))))))
+    (apply new-signal commands)))
 
 (defvar lifted--many-arg-commands '(:merge))
 (defun lifted--many-arg-dispatch (body subscribers command &rest args)
@@ -170,15 +172,13 @@
     (if (not commands)
         (lifted:signal body subscribers)
       (let ((command (pop commands)))
-        (let ((new-signal (cond ((member command lifted--no-arg-commands)
-                                 (lifted--no-arg-dispatch body subscribers command))
-                                ((member command lifted--one-arg-commands)
-                                 (let ((callback (pop commands)))
-                                   (lifted--one-arg-dispatch body subscribers command callback)))
-                                ((member command lifted--many-arg-commands)
-                                 (let ((num-commands-eaten (lifted--many-arg-dispatch body subscribers command commands)))
-                                   (setq commands (nthcdr num-commands-eaten commands)))))))
-          (apply new-signal commands))))))
+        (cond ((member command lifted--no-arg-commands)
+               (lifted--no-arg-dispatch body subscribers command commands))
+              ((member command lifted--one-arg-commands)
+               (lifted--one-arg-dispatch body subscribers command commands))
+              ((member command lifted--many-arg-commands)
+               (lifted--many-arg-dispatch body subscribers command commands))
+              (t (error "Unrecognized operation: %s" command)))))))
 
 (defun lifted:subscriber (&rest commands)
   "Creates a 'subscriber' closure"

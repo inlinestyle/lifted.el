@@ -48,7 +48,7 @@
 
 ;; ** Chaining subscriptions
 
-;; (funcall (funcall post-commandssignal
+;; (funcall (funcall post-command-signal
 ;;                   :subscribe-next (lambda (command) (message "got command: %s" command)))
 ;;          :subscribe-next (lambda (command) (message "also got command: %s" command)))
 
@@ -60,24 +60,29 @@
 
 ;; Operators implemented so far:
 ;; - filter
-;; - flatten (TODO: implement chaining form (need to allow 0 argument functions first))
+;; - flatten
 ;; - flatten-map
 ;; - map
 
-;; ** Chaining functional operators
+;; ** Merging
+
+;; (funcall (lifted:merge key-signal post-command-signal)
+;;          :subscribe-next (lambda (val) (message "got key or command: %s" val)))
+
+;; ** Deferring
+
+;; (lifted:defer key-signal) ; Any subscribing action will be "deferred"
+
+;; ** Chaining
 
 ;; (funcall key-signal
 ;;          :map (lambda (val) (float-time))
 ;;          :subscribe-next (lambda (val) (message "subscriber 1 reporting timestamp: %s" val))
 ;;          :subscribe-next (lambda (val) (message "subscriber 2 reporting timestamp: %s" val))
+;;          :defer
 ;;          :map (lambda (val) (round val))
 ;;          :filter (lambda (val) (evenp val))
 ;;          :subscribe-next (lambda (val) (message "subscriber 3 reporting even timestamp: %s" val)))
-
-;; ** Merging
-
-;; (funcall (lifted:merged key-signal post-command-signal)
-;;          :subscribe-next (lambda (val) (message "got key or command: %s" val)))
 
 ;;; Code:
 

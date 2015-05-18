@@ -16,7 +16,7 @@
   (should (equal lifted:test-log log)))
 
 (defun lifted:log (format-string &rest args)
-  (setq lifted:test-log (cons (apply 'format format-string args)
+  (setq lifted:test-log (cons (apply #'format format-string args)
                               lifted:test-log)))
 
 (defun lifted:trigger-test-hook-0 (value)
@@ -26,10 +26,10 @@
   (run-hook-with-args 'lifted:test-hook-1 value))
 
 (defun lifted:make-test-signal-0 ()
-  (lifted:map 'car (lifted:signal-for-hook-with-args 'lifted:test-hook-0)))
+  (lifted:map #'car (lifted:signal-for-hook-with-args 'lifted:test-hook-0)))
 
 (defun lifted:make-test-signal-1 ()
-  (lifted:map 'car (lifted:signal-for-hook-with-args 'lifted:test-hook-1)))
+  (lifted:map #'car (lifted:signal-for-hook-with-args 'lifted:test-hook-1)))
 
 ;; Actual tests
 

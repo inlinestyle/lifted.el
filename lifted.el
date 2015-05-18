@@ -149,11 +149,11 @@
 
 (defun lifted:merge (&rest base-signals)
   "Returns a signal merging the output of all given `base-signals'."
-  (lifted:flatten
-   (lifted:signal
-    (lambda (subscriber)
-      (dolist (base-signal base-signals)
-        (funcall subscriber :send-next base-signal))))))
+  (lifted:signal
+   (lambda (subscriber)
+     (dolist (base-signal base-signals)
+       (funcall base-signal :subscribe-next
+                (lambda (value) (funcall subscriber :send-next value)))))))
 
 ;; "Objects"
 
@@ -194,7 +194,7 @@
       (push (pop commands) args))
     (let ((new-signal (pcase command
                         (:merge
-                         (apply 'lifted:merge (cons (lifted:signal body subscribers) args))))))
+                         (apply #'lifted:merge (cons (lifted:signal body subscribers) args))))))
       (apply new-signal commands))))
 
 (defun lifted:signal (body &optional subscribers)

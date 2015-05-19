@@ -157,6 +157,8 @@
                 (lambda (value) (funcall subscriber :send-next value)))))))
 
 (defun lifted:combine-latest (&rest base-signals)
+  "Returns a signal that watches multiple signals for changes,
+and sends the latest values from all of them in a list when a change occurs."
   (lifted:signal
    (lambda (subscriber)
      (let ((values (make-vector (length base-signals) nil)))

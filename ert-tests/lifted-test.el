@@ -10,6 +10,7 @@
 (defun lifted:clear-test-fixtures ()
   (setq lifted:test-hook-0 '())
   (setq lifted:test-hook-1 '())
+  (setq lifted:test-hook-2 '())
   (setq lifted:test-log '()))
 
 (defun lifted:log-should-equal (log)
@@ -25,11 +26,17 @@
 (defun lifted:trigger-test-hook-1 (value)
   (run-hook-with-args 'lifted:test-hook-1 value))
 
+(defun lifted:trigger-test-hook-2 (value)
+  (run-hook-with-args 'lifted:test-hook-2 value))
+
 (defun lifted:make-test-signal-0 ()
   (lifted:map #'car (lifted:signal-for-hook-with-args 'lifted:test-hook-0)))
 
 (defun lifted:make-test-signal-1 ()
   (lifted:map #'car (lifted:signal-for-hook-with-args 'lifted:test-hook-1)))
+
+(defun lifted:make-test-signal-2 ()
+  (lifted:map #'car (lifted:signal-for-hook-with-args 'lifted:test-hook-2)))
 
 ;; Actual tests
 
@@ -127,18 +134,18 @@
     (funcall merged-signal :subscribe-next
              (lambda (value) (lifted:log "merged:%s" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 "test-0-0")
-    (lifted:trigger-test-hook-1 "test-1-0")
-    (lifted:trigger-test-hook-1 "test-1-1")
-    (lifted:trigger-test-hook-0 "test-0-1")
-    (lifted:trigger-test-hook-1 "test-1-2")
-    (lifted:trigger-test-hook-0 "test-0-2")
-    (lifted:log-should-equal '("merged:test-0-2"
-                               "merged:test-1-2"
-                               "merged:test-0-1"
-                               "merged:test-1-1"
-                               "merged:test-1-0"
-                               "merged:test-0-0"))))
+    (lifted:trigger-test-hook-0 "test-0-a")
+    (lifted:trigger-test-hook-1 "test-1-a")
+    (lifted:trigger-test-hook-1 "test-1-b")
+    (lifted:trigger-test-hook-0 "test-0-b")
+    (lifted:trigger-test-hook-1 "test-1-c")
+    (lifted:trigger-test-hook-0 "test-0-c")
+    (lifted:log-should-equal '("merged:test-0-c"
+                               "merged:test-1-c"
+                               "merged:test-0-b"
+                               "merged:test-1-b"
+                               "merged:test-1-a"
+                               "merged:test-0-a"))))
 
 
 (ert-deftest lifted-test-merge-chaining ()
@@ -149,19 +156,39 @@
     (funcall merged-signal :subscribe-next
              (lambda (value) (lifted:log "merged:%s" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 "test-0-0")
-    (lifted:trigger-test-hook-1 "test-1-0")
-    (lifted:trigger-test-hook-1 "test-1-1")
-    (lifted:trigger-test-hook-0 "test-0-1")
-    (lifted:trigger-test-hook-1 "test-1-2")
-    (lifted:trigger-test-hook-0 "test-0-2")
-    (lifted:log-should-equal '("merged:test-0-2"
-                               "merged:test-1-2"
-                               "merged:test-0-1"
-                               "merged:test-1-1"
-                               "merged:test-1-0"
-                               "merged:test-0-0"))))
+    (lifted:trigger-test-hook-0 "test-0-a")
+    (lifted:trigger-test-hook-1 "test-1-a")
+    (lifted:trigger-test-hook-1 "test-1-b")
+    (lifted:trigger-test-hook-0 "test-0-b")
+    (lifted:trigger-test-hook-1 "test-1-c")
+    (lifted:trigger-test-hook-0 "test-0-c")
+    (lifted:log-should-equal '("merged:test-0-c"
+                               "merged:test-1-c"
+                               "merged:test-0-b"
+                               "merged:test-1-b"
+                               "merged:test-1-a"
+                               "merged:test-0-a"))))
 
+(ert-deftest lifted-test-combine-latest ()
+  (lifted:clear-test-fixtures)
+  (let* ((test-signal-0 (lifted:make-test-signal-0))
+         (test-signal-1 (lifted:make-test-signal-1))
+         (test-signal-2 (lifted:make-test-signal-2))
+         (combined-signal (lifted:combine-latest test-signal-0 test-signal-1 test-signal-2)))
+    (funcall combined-signal :subscribe-next
+             (lambda (value) (lifted:log "combined: %s" value)))
+    (lifted:log-should-equal '())
+    (lifted:trigger-test-hook-0 "test-0-a")
+    (lifted:trigger-test-hook-2 "test-2-a")
+    (lifted:trigger-test-hook-2 "test-2-b")
+    (lifted:trigger-test-hook-1 "test-1-a")
+    (lifted:trigger-test-hook-0 "test-0-b")
+    (lifted:trigger-test-hook-0 "test-0-c")
+    (lifted:trigger-test-hook-2 "test-2-c")
+    (lifted:log-should-equal '("combined: (test-0-c test-1-a test-2-c)"
+                               "combined: (test-0-c test-1-a test-2-b)"
+                               "combined: (test-0-b test-1-a test-2-b)"
+                               "combined: (test-0-a test-1-a test-2-b)"))))
 
 (ert-deftest lifted-test-flatten-map-with-multiple-subscribers ()
   (lifted:clear-test-fixtures)

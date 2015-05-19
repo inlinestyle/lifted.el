@@ -155,6 +155,20 @@
        (funcall base-signal :subscribe-next
                 (lambda (value) (funcall subscriber :send-next value)))))))
 
+(defun lifted:combine-latest (&rest base-signals)
+  (lifted:signal
+   (lambda (subscriber)
+     (let ((values (make-vector (length base-signals) nil)))
+       (dolist (pair (lifted--enumerate base-signals))
+         (let ((i (car pair))
+               (base-signal (cadr pair)))
+           (funcall base-signal :subscribe-next
+                    (lambda (value)
+                      (aset values i value)
+                      (let ((values-list (append values '())))
+                        (if (not (member nil values-list))
+                            (funcall subscriber :send-next values-list)))))))))))
+
 ;; "Objects"
 
 (defvar lifted--no-arg-commands '(:defer :flatten))
@@ -260,6 +274,17 @@ Assumes & passes along hook arguments."
      (add-hook hook
                (lambda (&rest args)
                  (funcall subscriber :send-next args))))))
+
+;; Private helpers
+
+(defun lifted--zip (&rest lists)
+  (unless (member nil lists)
+    (cons (mapcar #'car lists)
+          (apply #'lifted--zip (mapcar #'cdr lists)))))
+
+(defun lifted--enumerate (sequence)
+  (lifted--zip (number-sequence 0 (1- (length sequence)))
+               sequence))
 
 (provide 'lifted)
 

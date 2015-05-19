@@ -20,13 +20,13 @@
   (setq lifted:test-log (cons (apply #'format format-string args)
                               lifted:test-log)))
 
-(defun lifted:trigger-test-hook-0 (value)
+(defun lifted:run-test-hook-0 (value)
   (run-hook-with-args 'lifted:test-hook-0 value))
 
-(defun lifted:trigger-test-hook-1 (value)
+(defun lifted:run-test-hook-1 (value)
   (run-hook-with-args 'lifted:test-hook-1 value))
 
-(defun lifted:trigger-test-hook-2 (value)
+(defun lifted:run-test-hook-2 (value)
   (run-hook-with-args 'lifted:test-hook-2 value))
 
 (defun lifted:make-test-signal-0 ()
@@ -45,7 +45,7 @@
   (funcall (lifted:make-test-signal-0) :subscribe-next
            (lambda (value) (lifted:log value)))
   (lifted:log-should-equal '())
-  (lifted:trigger-test-hook-0 "testing")
+  (lifted:run-test-hook-0 "testing")
   (lifted:log-should-equal '("testing")))
 
 (ert-deftest lifted-test-signal-subscribe-next-with-multiple-subscribers ()
@@ -56,7 +56,7 @@
     (funcall test-signal :subscribe-next
              (lambda (value) (lifted:log "%s1" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 "testing")
+    (lifted:run-test-hook-0 "testing")
     (lifted:log-should-equal '("testing0" "testing1"))))
 
 (ert-deftest lifted-test-subscriber-send-next ()
@@ -77,7 +77,7 @@
     (funcall test-map-signal :subscribe-next
              (lambda (value) (lifted:log "%s" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 6)
+    (lifted:run-test-hook-0 6)
     (lifted:log-should-equal '("6" "18"))))
 
 (ert-deftest lifted-test-map-chaining ()
@@ -89,7 +89,7 @@
     (funcall test-map-signal :subscribe-next
              (lambda (value) (lifted:log "%s" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 6)
+    (lifted:run-test-hook-0 6)
     (lifted:log-should-equal '("6" "18"))))
 
 (ert-deftest lifted-test-map-with-multiple-subscribers ()
@@ -104,7 +104,7 @@
     (funcall test-map-signal :subscribe-next
              (lambda (value) (lifted:log "%s:subscribed1" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 "testing")
+    (lifted:run-test-hook-0 "testing")
     (lifted:log-should-equal '("testing:mapped:subscribed0"
                                "in-map"
                                "testing:mapped:subscribed1"
@@ -119,11 +119,11 @@
     (funcall test-filter-signal :subscribe-next
              (lambda (value) (lifted:log "%s" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 6)
-    (lifted:trigger-test-hook-0 7)
-    (lifted:trigger-test-hook-0 4)
-    (lifted:trigger-test-hook-0 2)
-    (lifted:trigger-test-hook-0 3)
+    (lifted:run-test-hook-0 6)
+    (lifted:run-test-hook-0 7)
+    (lifted:run-test-hook-0 4)
+    (lifted:run-test-hook-0 2)
+    (lifted:run-test-hook-0 3)
     (lifted:log-should-equal '("3" "2" "2" "4" "4" "7" "6" "6"))))
 
 (ert-deftest lifted-test-merge ()
@@ -134,12 +134,12 @@
     (funcall merged-signal :subscribe-next
              (lambda (value) (lifted:log "merged:%s" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 "test-0-a")
-    (lifted:trigger-test-hook-1 "test-1-a")
-    (lifted:trigger-test-hook-1 "test-1-b")
-    (lifted:trigger-test-hook-0 "test-0-b")
-    (lifted:trigger-test-hook-1 "test-1-c")
-    (lifted:trigger-test-hook-0 "test-0-c")
+    (lifted:run-test-hook-0 "test-0-a")
+    (lifted:run-test-hook-1 "test-1-a")
+    (lifted:run-test-hook-1 "test-1-b")
+    (lifted:run-test-hook-0 "test-0-b")
+    (lifted:run-test-hook-1 "test-1-c")
+    (lifted:run-test-hook-0 "test-0-c")
     (lifted:log-should-equal '("merged:test-0-c"
                                "merged:test-1-c"
                                "merged:test-0-b"
@@ -156,12 +156,12 @@
     (funcall merged-signal :subscribe-next
              (lambda (value) (lifted:log "merged:%s" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 "test-0-a")
-    (lifted:trigger-test-hook-1 "test-1-a")
-    (lifted:trigger-test-hook-1 "test-1-b")
-    (lifted:trigger-test-hook-0 "test-0-b")
-    (lifted:trigger-test-hook-1 "test-1-c")
-    (lifted:trigger-test-hook-0 "test-0-c")
+    (lifted:run-test-hook-0 "test-0-a")
+    (lifted:run-test-hook-1 "test-1-a")
+    (lifted:run-test-hook-1 "test-1-b")
+    (lifted:run-test-hook-0 "test-0-b")
+    (lifted:run-test-hook-1 "test-1-c")
+    (lifted:run-test-hook-0 "test-0-c")
     (lifted:log-should-equal '("merged:test-0-c"
                                "merged:test-1-c"
                                "merged:test-0-b"
@@ -178,13 +178,13 @@
     (funcall combined-signal :subscribe-next
              (lambda (value) (lifted:log "combined: %s" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 "test-0-a")
-    (lifted:trigger-test-hook-2 "test-2-a")
-    (lifted:trigger-test-hook-2 "test-2-b")
-    (lifted:trigger-test-hook-1 "test-1-a")
-    (lifted:trigger-test-hook-0 "test-0-b")
-    (lifted:trigger-test-hook-0 "test-0-c")
-    (lifted:trigger-test-hook-2 "test-2-c")
+    (lifted:run-test-hook-0 "test-0-a")
+    (lifted:run-test-hook-2 "test-2-a")
+    (lifted:run-test-hook-2 "test-2-b")
+    (lifted:run-test-hook-1 "test-1-a")
+    (lifted:run-test-hook-0 "test-0-b")
+    (lifted:run-test-hook-0 "test-0-c")
+    (lifted:run-test-hook-2 "test-2-c")
     (lifted:log-should-equal '("combined: (test-0-c test-1-a test-2-c)"
                                "combined: (test-0-c test-1-a test-2-b)"
                                "combined: (test-0-b test-1-a test-2-b)"
@@ -203,11 +203,11 @@
     (funcall test-flatten-map-signal :subscribe-next
              (lambda (value) (lifted:log "%s:subscribed2" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 "local0")
-    (lifted:trigger-test-hook-1 "external0")
-    (lifted:trigger-test-hook-1 "external1")
-    (lifted:trigger-test-hook-0 "local1")
-    (lifted:trigger-test-hook-1 "external2")
+    (lifted:run-test-hook-0 "local0")
+    (lifted:run-test-hook-1 "external0")
+    (lifted:run-test-hook-1 "external1")
+    (lifted:run-test-hook-0 "local1")
+    (lifted:run-test-hook-1 "external2")
     (lifted:log-should-equal '("external2:subscribed2"
                                "external2:subscribed1"
                                "external2:subscribed2"
@@ -226,7 +226,7 @@
     (funcall deferred-signal :subscribe-next
              (lambda (value) (lifted:log "%s" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 "deferred")
+    (lifted:run-test-hook-0 "deferred")
     (lifted:log-should-equal '())
     (deferred:flush-queue!)
     (lifted:log-should-equal '("deferred"))))
@@ -238,7 +238,7 @@
     (funcall deferred-signal :subscribe-next
              (lambda (value) (lifted:log "%s" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 "deferred")
+    (lifted:run-test-hook-0 "deferred")
     (lifted:log-should-equal '())
     (deferred:flush-queue!)
     (lifted:log-should-equal '("deferred"))))
@@ -251,7 +251,7 @@
              :map (lambda (value) (* value 3))
              :subscribe-next (lambda (value) (lifted:log "%s" value)))
     (lifted:log-should-equal '())
-    (lifted:trigger-test-hook-0 6)
+    (lifted:run-test-hook-0 6)
     (lifted:log-should-equal '())
     (deferred:flush-queue!)
     (lifted:log-should-equal '("18"))))

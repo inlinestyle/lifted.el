@@ -181,7 +181,7 @@
                        (lifted:flatten (lifted:signal body subscribers))))))
     (apply new-signal commands)))
 
-(defvar lifted--one-arg-commands '(:map :flatten-map :filter :subscribe-next :subscribe-completed :subscribe-error))
+(defvar lifted--one-arg-commands '(:filter :flatten-map :map :subscribe-completed :subscribe-error :subscribe-next))
 (defun lifted--one-arg-dispatch (body subscribers command commands)
   (let* ((callback (pop commands))
          (new-signal (pcase command
@@ -201,13 +201,15 @@
                           (lifted:signal body (cons subscriber subscribers)))))))
     (apply new-signal commands)))
 
-(defvar lifted--many-arg-commands '(:merge))
+(defvar lifted--many-arg-commands '(:combine-latest :merge))
 (defun lifted--many-arg-dispatch (body subscribers command commands)
   (let* ((args '()))
     (while (and commands
                 (not (keywordp (car commands))))
       (push (pop commands) args))
     (let ((new-signal (pcase command
+                        (:combine-latest
+                         (apply #'lifted:combine-latest (cons (lifted:signal body subscribers) args)))
                         (:merge
                          (apply #'lifted:merge (cons (lifted:signal body subscribers) args))))))
       (apply new-signal commands))))

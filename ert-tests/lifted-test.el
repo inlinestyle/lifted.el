@@ -190,6 +190,31 @@
                                "combined: (test-0-b test-1-a test-2-b)"
                                "combined: (test-0-a test-1-a test-2-b)"))))
 
+(ert-deftest lifted-test-combine-latest-with-multiple-subscribers ()
+  (lifted:clear-test-fixtures)
+  (let* ((test-signal-0 (lifted:make-test-signal-0))
+         (test-signal-1 (lifted:make-test-signal-1))
+         (test-signal-2 (lifted:make-test-signal-2))
+         (combined-signal (lifted:combine-latest test-signal-0 test-signal-1 test-signal-2)))
+    (funcall combined-signal :subscribe-next
+             (lambda (value) (lifted:log "combined0: %s" value)))
+    (lifted:log-should-equal '())
+    (lifted:run-test-hook-0 "test-0-a")
+    (lifted:run-test-hook-1 "test-1-a")
+    (lifted:run-test-hook-2 "test-2-a")
+    (lifted:run-test-hook-0 "test-0-b")
+    (funcall combined-signal :subscribe-next
+             (lambda (value) (lifted:log "combined1: %s" value)))
+    (lifted:run-test-hook-1 "test-1-b")
+    (lifted:run-test-hook-2 "test-2-b")
+    (lifted:run-test-hook-0 "test-0-c")
+    (lifted:log-should-equal '("combined0: (test-0-c test-1-b test-2-b)"
+                               "combined1: (test-0-c test-1-b test-2-b)"
+                               "combined0: (test-0-b test-1-b test-2-b)"
+                               "combined0: (test-0-b test-1-b test-2-a)"
+                               "combined0: (test-0-b test-1-a test-2-a)"
+                               "combined0: (test-0-a test-1-a test-2-a)"))))
+
 (ert-deftest lifted-test-flatten-map-with-multiple-subscribers ()
   (lifted:clear-test-fixtures)
   (let* ((test-signal (lifted:make-test-signal-0))

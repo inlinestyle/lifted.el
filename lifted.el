@@ -18,6 +18,7 @@
 ;;  - multicasting
 ;;  - signal disposal
 ;;  - error handling
+;;  - throttling/debouncing
 ;;  - sequences & cold signals
 ;;  - possibly reducing the number of `funcall`s
 ;;  - cask build

@@ -106,13 +106,18 @@
 ;; Operators
 
 (defun lifted:map (callback base-signal)
-  "Returns a signal producing the output of the `base-signal', with `callback' applied."
+  "Returns a signal producing the output of the `base-signal', with `callback' called on the value."
   (lifted:signal
    (lambda (subscriber)
      (funcall base-signal :subscribe-next
               (lambda (value)
                 (funcall subscriber :send-next
                          (funcall callback value)))))))
+
+(defun lifted:map-apply (callback base-signal)
+  "Returns a signal producing the output of the `base-signal', with `callback' `apply'-ed on the value.
+This is especially useful in tandem with `lifted:combine-latest'."
+  (lifted:map (lambda (value-args) (apply callback value-args)) base-signal))
 
 (defun lifted:flatten (base-signal)
   "Returns a signal merging the output of a signal-producing `base-signal'."
@@ -158,7 +163,8 @@
 
 (defun lifted:combine-latest (&rest base-signals)
   "Returns a signal that watches multiple signals for changes,
-and sends the latest values from all of them in a list when a change occurs."
+and sends the latest values from all of them in a list when a change occurs.
+Note: I'm not happy with the implementation here (mutating a vector)."
   (lifted:signal
    (lambda (subscriber)
      (let ((values (make-vector (length base-signals) nil)))
@@ -172,7 +178,7 @@ and sends the latest values from all of them in a list when a change occurs."
                         (if (not (member nil values-list))
                             (funcall subscriber :send-next values-list)))))))))))
 
-;; "Objects"
+;; Implementation of the "nouns" of the system: signals and subscribers
 
 (defvar lifted--no-arg-commands '(:defer :flatten))
 (defun lifted--no-arg-dispatch (body subscribers command commands)

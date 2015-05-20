@@ -221,11 +221,7 @@ Note: I'm not happy with the implementation here (mutating a vector)."
       (push (pop commands) args))
     (let ((new-signal (let ((function (gethash command lifted--many-arg-commands))
                             (base-signal (lifted:signal body subscribers)))
-                        (pcase command
-                          (:combine-latest
-                           (apply function (cons base-signal args)))
-                          (:merge
-                           (apply function (cons base-signal args)))))))
+                        (apply function (cons base-signal args)))))
       (apply new-signal commands))))
 
 (defun lifted:signal (body &optional subscribers)

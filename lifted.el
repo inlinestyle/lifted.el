@@ -215,17 +215,19 @@ Note: I'm not happy with the implementation here (mutating a vector)."
                          (funcall function callback base-signal)))))
     (apply new-signal commands)))
 
-(defvar lifted--many-arg-commands '(:combine-latest :merge))
+(defvar lifted--many-arg-commands #s(hash-table size 2 data (:combine-latest lifted:combine-latest :merge lifted:merge)))
 (defun lifted--many-arg-dispatch (body subscribers command commands)
   (let* ((args '()))
     (while (and commands
                 (not (keywordp (car commands))))
       (push (pop commands) args))
-    (let ((new-signal (pcase command
-                        (:combine-latest
-                         (apply #'lifted:combine-latest (cons (lifted:signal body subscribers) args)))
-                        (:merge
-                         (apply #'lifted:merge (cons (lifted:signal body subscribers) args))))))
+    (let ((new-signal (let ((function (gethash command lifted--many-arg-commands))
+                            (base-signal (lifted:signal body subscribers)))
+                        (pcase command
+                          (:combine-latest
+                           (apply function (cons base-signal args)))
+                          (:merge
+                           (apply function (cons base-signal args)))))))
       (apply new-signal commands))))
 
 (defun lifted:signal (body &optional subscribers)
@@ -238,7 +240,7 @@ Note: I'm not happy with the implementation here (mutating a vector)."
                (lifted--no-arg-dispatch body subscribers command commands))
               ((gethash command lifted--one-arg-commands)
                (lifted--one-arg-dispatch body subscribers command commands))
-              ((member command lifted--many-arg-commands)
+              ((gethash command lifted--many-arg-commands)
                (lifted--many-arg-dispatch body subscribers command commands))
               (t (error "Unrecognized operation: %s" command)))))))
 

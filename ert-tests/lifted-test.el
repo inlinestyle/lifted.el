@@ -110,6 +110,21 @@
                                "testing:mapped:subscribed1"
                                "in-map"))))
 
+(ert-deftest lifted-test-map-apply ()
+  (lifted:clear-test-fixtures)
+  (let* ((test-signal (lifted:make-test-signal-0))
+         (test-map-apply-signal (lifted:map-apply (lambda (value-a value-b value-c)
+                                                    (* value-a value-c))
+                                                  test-signal)))
+    (funcall test-signal :subscribe-next
+             (lambda (value) (lifted:log "%s" value)))
+    (funcall test-map-apply-signal :subscribe-next
+             (lambda (value) (lifted:log "%s" value)))
+    (lifted:log-should-equal '())
+    (lifted:run-test-hook-0 '(6 7 8))
+    (lifted:log-should-equal '("(6 7 8)"
+                               "48"))))
+
 (ert-deftest lifted-test-filter ()
   (lifted:clear-test-fixtures)
   (let* ((test-signal (lifted:make-test-signal-0))
@@ -236,6 +251,28 @@
                                "combined & mapped: 213"
                                "combined & mapped: 212"
                                "combined & mapped: 211"))))
+
+(ert-deftest lifted-test-combine-latest-chaining-map-apply ()
+  (lifted:clear-test-fixtures)
+  (let* ((test-signal-0 (lifted:make-test-signal-0))
+         (test-signal-1 (lifted:make-test-signal-1))
+         (test-signal-2 (lifted:make-test-signal-2)))
+    (funcall test-signal-0
+             :combine-latest test-signal-2 test-signal-1
+             :map-apply      (lambda (value-0 value-1 value-2) (+ (- value-2 value-1) value-0))
+             :subscribe-next (lambda (value) (lifted:log "combined & mapped: %s" value)))
+    (lifted:log-should-equal '())
+    (lifted:run-test-hook-0 1)
+    (lifted:run-test-hook-2 100)
+    (lifted:run-test-hook-2 200)
+    (lifted:run-test-hook-1 10)
+    (lifted:run-test-hook-0 2)
+    (lifted:run-test-hook-0 3)
+    (lifted:run-test-hook-2 300)
+    (lifted:log-should-equal '("combined & mapped: 293"
+                               "combined & mapped: 193"
+                               "combined & mapped: 192"
+                               "combined & mapped: 191"))))
 
 (ert-deftest lifted-test-flatten-map-with-multiple-subscribers ()
   (lifted:clear-test-fixtures)

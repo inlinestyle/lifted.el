@@ -189,12 +189,14 @@ Note: I'm not happy with the implementation here (mutating a vector)."
                        (lifted:flatten (lifted:signal body subscribers))))))
     (apply new-signal commands)))
 
-(defvar lifted--one-arg-commands '(:filter :flatten-map :map :subscribe-completed :subscribe-error :subscribe-next))
+(defvar lifted--one-arg-commands '(:filter :flatten-map :map :map-apply :subscribe-completed :subscribe-error :subscribe-next))
 (defun lifted--one-arg-dispatch (body subscribers command commands)
   (let* ((callback (pop commands))
          (new-signal (pcase command
                        (:map
                         (lifted:map callback (lifted:signal body subscribers)))
+                       (:map-apply
+                        (lifted:map-apply callback (lifted:signal body subscribers)))
                        (:filter
                         (lifted:filter callback (lifted:signal body subscribers)))
                        (:flatten-map

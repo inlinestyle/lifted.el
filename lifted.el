@@ -191,13 +191,11 @@ Note: I'm not happy with the implementation here (mutating a vector)."
 
 ;; Implementation of the "nouns" of the system: signals and subscribers
 
-(defvar lifted--no-arg-commands '(:defer :flatten))
+(defvar lifted--no-arg-commands #s(hash-table size 2 data (:defer lifted:defer :flatten lifted:flatten)))
 (defun lifted--no-arg-dispatch (body subscribers command commands)
-  (let ((new-signal (pcase command
-                      (:defer
-                       (lifted:defer (lifted:signal body subscribers)))
-                      (:flatten
-                       (lifted:flatten (lifted:signal body subscribers))))))
+  (let ((new-signal (let ((function (gethash command lifted--no-arg-commands))
+                          (base-signal (lifted:signal body subscribers)))
+                      (funcall function base-signal))))
     (apply new-signal commands)))
 
 (defvar lifted--one-arg-commands
@@ -236,7 +234,7 @@ Note: I'm not happy with the implementation here (mutating a vector)."
     (if (not commands)
         (lifted:signal body subscribers)
       (let ((command (pop commands)))
-        (cond ((member command lifted--no-arg-commands)
+        (cond ((gethash command lifted--no-arg-commands)
                (lifted--no-arg-dispatch body subscribers command commands))
               ((gethash command lifted--one-arg-commands)
                (lifted--one-arg-dispatch body subscribers command commands))

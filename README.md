@@ -26,7 +26,6 @@ This is a rough draft of an FRP library for Emacs Lisp. I'm working from a numbe
 ## TODO
 There's a ton left to do!
  - many more functional operators
- - various signal combination/reduce helpers
  - more diverse deferral options
  - multicasting
  - signal disposal

@@ -13,7 +13,6 @@
 ;; This is a rough draft of an FRP library for Emacs. I'm working from a number of inspirations, primarily ReactiveCocoa and Elm.
 ;; There's a lot left to do, including but not limited to:
 ;;  - many more functional operators
-;;  - various signal combination/reduce helpers
 ;;  - more diverse deferral options
 ;;  - multicasting
 ;;  - signal disposal
@@ -178,6 +177,18 @@ Note: I'm not happy with the implementation here (mutating a vector)."
                         (if (not (member nil values-list))
                             (funcall subscriber :send-next values-list)))))))))))
 
+(defun lifted:subscribe-next (callback base-signal)
+  (let ((subscriber (lifted:subscriber :next callback)))
+    (funcall base-signal :subscribe subscriber)))
+
+(defun lifted:subscribe-error (callback base-signal)
+  (let ((subscriber (lifted:subscriber :error callback)))
+    (funcall base-signal :subscribe subscriber)))
+
+(defun lifted:subscribe-completed (callback base-signal)
+  (let ((subscriber (lifted:subscriber :completed callback)))
+    (funcall base-signal :subscribe subscriber)))
+
 ;; Implementation of the "nouns" of the system: signals and subscribers
 
 (defvar lifted--no-arg-commands '(:defer :flatten))
@@ -189,26 +200,19 @@ Note: I'm not happy with the implementation here (mutating a vector)."
                        (lifted:flatten (lifted:signal body subscribers))))))
     (apply new-signal commands)))
 
-(defvar lifted--one-arg-commands '(:filter :flatten-map :map :map-apply :subscribe-completed :subscribe-error :subscribe-next))
+(defvar lifted--one-arg-commands
+  #s(hash-table
+     size 7 data
+     (:filter lifted:filter :flatten-map lifted:flatten-map :map lifted:map :map-apply lifted:map-apply :subscribe t :subscribe-completed lifted:subscribe-completed :subscribe-error lifted:subscribe-error :subscribe-next lifted:subscribe-next)))
 (defun lifted--one-arg-dispatch (body subscribers command commands)
   (let* ((callback (pop commands))
-         (new-signal (pcase command
-                       (:map
-                        (lifted:map callback (lifted:signal body subscribers)))
-                       (:map-apply
-                        (lifted:map-apply callback (lifted:signal body subscribers)))
-                       (:filter
-                        (lifted:filter callback (lifted:signal body subscribers)))
-                       (:flatten-map
-                        (lifted:flatten-map callback (lifted:signal body subscribers)))
-                       (:subscribe-next
-                        (let ((subscriber (lifted:subscriber :next callback)))
-                          (funcall body subscriber)
-                          (lifted:signal body (cons subscriber subscribers))))
-                       (:subscribe-completed
-                        (let ((subscriber (lifted:subscriber :completed callback)))
-                          (funcall body subscriber)
-                          (lifted:signal body (cons subscriber subscribers)))))))
+         (new-signal (if (eq command :subscribe)
+                         (let ((subscriber callback))
+                           (funcall body subscriber)
+                           (lifted:signal body (cons subscriber subscribers)))
+                       (let ((function (gethash command lifted--one-arg-commands))
+                             (base-signal (lifted:signal body subscribers)))
+                         (funcall function callback base-signal)))))
     (apply new-signal commands)))
 
 (defvar lifted--many-arg-commands '(:combine-latest :merge))
@@ -232,7 +236,7 @@ Note: I'm not happy with the implementation here (mutating a vector)."
       (let ((command (pop commands)))
         (cond ((member command lifted--no-arg-commands)
                (lifted--no-arg-dispatch body subscribers command commands))
-              ((member command lifted--one-arg-commands)
+              ((gethash command lifted--one-arg-commands)
                (lifted--one-arg-dispatch body subscribers command commands))
               ((member command lifted--many-arg-commands)
                (lifted--many-arg-dispatch body subscribers command commands))

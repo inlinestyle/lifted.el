@@ -193,9 +193,9 @@ Note: I'm not happy with the implementation here (mutating a vector)."
 
 (defvar lifted--no-arg-commands #s(hash-table size 2 data (:defer lifted:defer :flatten lifted:flatten)))
 (defun lifted--no-arg-dispatch (body subscribers command commands)
-  (let ((new-signal (let ((function (gethash command lifted--no-arg-commands))
-                          (base-signal (lifted:signal body subscribers)))
-                      (funcall function base-signal))))
+  (let* ((function (gethash command lifted--no-arg-commands))
+         (base-signal (lifted:signal body subscribers))
+         (new-signal (funcall function base-signal)))
     (apply new-signal commands)))
 
 (defvar lifted--one-arg-commands
@@ -215,13 +215,12 @@ Note: I'm not happy with the implementation here (mutating a vector)."
 
 (defvar lifted--many-arg-commands #s(hash-table size 2 data (:combine-latest lifted:combine-latest :merge lifted:merge)))
 (defun lifted--many-arg-dispatch (body subscribers command commands)
-  (let* ((args '()))
-    (while (and commands
-                (not (keywordp (car commands))))
+  (let ((args '()))
+    (while (and commands (not (keywordp (car commands))))
       (push (pop commands) args))
-    (let ((new-signal (let ((function (gethash command lifted--many-arg-commands))
-                            (base-signal (lifted:signal body subscribers)))
-                        (apply function (cons base-signal args)))))
+    (let* ((function (gethash command lifted--many-arg-commands))
+           (base-signal (lifted:signal body subscribers))
+           (new-signal (apply function (cons base-signal args))))
       (apply new-signal commands))))
 
 (defun lifted:signal (body &optional subscribers)
@@ -240,7 +239,7 @@ Note: I'm not happy with the implementation here (mutating a vector)."
 
 (defun lifted:subscriber (&rest commands)
   "Creates a 'subscriber' closure"
-  (let ((callbacks (make-hash-table)))
+  (let ((callbacks (make-hash-table :size 3)))
     (while commands
       (let ((command (pop commands))
             (callback (pop commands)))
@@ -253,7 +252,8 @@ Note: I'm not happy with the implementation here (mutating a vector)."
               (value (pop commands)))
           (pcase command
             (:send-next (funcall (gethash :next callbacks) value))
-            (:send-completed (funcall (gethash :completed callbacks))))))))) ;; where to dispatch these?
+            (:send-error (funcall (gethash :error callbacks) value))
+            (:send-completed (funcall (gethash :completed callbacks)))))))))
 
 ;; UI Utilities
 

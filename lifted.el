@@ -1,6 +1,4 @@
-;;; -*- lexical-binding: t -*-
-
-;;; lifted.el --- Functional reactive programming library for Emacs Lisp
+;;; lifted.el --- Functional reactive programming library for Emacs Lisp -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Ben Yelsey
 
